@@ -54,7 +54,7 @@ def prepare_crypto_list():
     return crypto_names
 
 
-def preapre_data_for_crypto_main_line_graph(start_time, end_time, CRYPTO_CURRENCIES):
+def prepare_data_for_crypto_main_line_graph(start_time, end_time, CRYPTO_CURRENCIES):
     unix_start_time = time.mktime(start_time.timetuple())*1000
     unix_end_time = time.mktime(end_time.timetuple())*1000
     try:
@@ -137,7 +137,7 @@ def prepare_data_for_fear_and_greed_index():
     return df_fng, df_short_fng
 
 
-def preapre_data_for_rsi_indicator():
+def prepare_data_for_rsi_indicator():
     rsi_url = (
         f'https://api.polygon.io/v1/indicators/rsi/X:BTCUSD?timespan=hour&window=14' +
         f'&series_type=close&expand_underlying=false&order=desc&limit=700&apiKey={api_key_polygon}'
@@ -153,7 +153,7 @@ def preapre_data_for_rsi_indicator():
     return df_rsi
 
 
-def preapre_data_for_ma_50_and_200_indicator():
+def prepare_data_for_ma_50_and_200_indicator():
     sma_url = f'https://api.polygon.io/v1/indicators/sma/X:BTCUSD?timespan=hour&window=50&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
     ema_url = f'https://api.polygon.io/v1/indicators/ema/X:BTCUSD?timespan=hour&window=50&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
     try:
@@ -175,7 +175,7 @@ def preapre_data_for_ma_50_and_200_indicator():
             "value_y": "EMA",
             "priceUsd": "BTC price"
         })
-        df_ma200 = preapre_data_for_ma_200_indicator(df_btc_price)
+        df_ma200 = prepare_data_for_ma_200_indicator(df_btc_price)
     except:
         df_ma50 = pd.DataFrame()
         df_ma200 = pd.DataFrame()
@@ -201,7 +201,7 @@ def prepare_btc_price_for_ma_indicator(df_ma50):
     return df_btc_price
 
 
-def preapre_data_for_ma_200_indicator(df_btc_price):
+def prepare_data_for_ma_200_indicator(df_btc_price):
     sma200_url = f'https://api.polygon.io/v1/indicators/sma/X:BTCUSD?timespan=hour&window=180&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
     ema200_url = f'https://api.polygon.io/v1/indicators/ema/X:BTCUSD?timespan=hour&window=180&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
     try:
