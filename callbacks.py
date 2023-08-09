@@ -1,23 +1,19 @@
-
-from app import app
-
-from dash import Input, Output, State
-import plotly.express as px
+import datetime
+import json
+from dateutil import parser
 
 import pandas as pd
-import datetime
-import time
+import plotly.express as px
 import requests
-import json
+from dash import Input, Output, State
+from forex_python.converter import CurrencyRates
 
-from common import BASE_CURRENCIES
-from common import COLORS
-
-from data_manage import prepare_crypto_list
+from app import app
+from common import BASE_CURRENCIES, COLORS
 from data_manage import (
-    preapre_data_for_crypto_main_line_graph, prepare_data_for_fear_and_greed_index,
-    preapre_data_for_rsi_indicator, preapre_data_for_ma_50_and_200_indicator,
-    save_exchange_rates, get_from_cache_database
+    prepare_crypto_list, preapre_data_for_crypto_main_line_graph, 
+    prepare_data_for_fear_and_greed_index, preapre_data_for_rsi_indicator, 
+    preapre_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
 )
 
 
@@ -45,14 +41,12 @@ df_main_graph = preapre_data_for_crypto_main_line_graph(
     ]
 )
 def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_date):
-    from dateutil import parser
     sent_start_time = parser.isoparse(start_date)
     sent_end_time = parser.isoparse(end_date)
     start_time_difference = sent_start_time - default_start_time
     start_time_difference = start_time_difference.days
     end_time_difference = sent_end_time - default_start_time
     end_time_difference = end_time_difference.days
-    from forex_python.converter import CurrencyRates
     try:
         currency_rates = CurrencyRates()
         usd_rate = currency_rates.get_rate('USD', base_currency)
@@ -100,7 +94,6 @@ alert_message = True
     [Input('base-currency', 'value')]
 )
 def get_exchange_rates(base_currency):
-    from forex_python.converter import CurrencyRates
     try:
         currency_rates = CurrencyRates()
         usd_price = round(currency_rates.get_rate(base_currency, 'USD'), 2)
@@ -145,7 +138,6 @@ def create_table_header(base_currency):
     [Input('base-currency', 'value')]
 )
 def create_ranking_table(base_currency):
-    from forex_python.converter import CurrencyRates
     try:
         currency_rates = CurrencyRates()
         usd_rate = currency_rates.get_rate('USD', base_currency)
@@ -232,7 +224,7 @@ def create_ranking_table(base_currency):
         {"id": "Crypto Name", "name": "Crypto Name"},
         {"id": "Symbol", "name": "Symbol"},
         {
-            "id": f"Price[{base_currency}]", 
+            "id": f"Price[{base_currency}]",
             "name": f"Price[{base_currency}]"
         },
         {"id": "Supply", "name": "Supply"},
@@ -274,8 +266,8 @@ def display_fng_series(time_range):
     else:
         df_cut = df_fng
     fig = px.line(
-        df_cut, 
-        x='timestamp', 
+        df_cut,
+        x='timestamp',
         y='value',
         labels={
             "value": "FNG value",
@@ -307,9 +299,9 @@ def display_rsi_series(time_range):
     else:
         df_cut = df_rsi
     fig = px.scatter(
-        df_cut, 
-        x="timestamp", 
-        y="value", 
+        df_cut,
+        x="timestamp",
+        y="value",
         color="value",
         color_continuous_scale=["red", "yellow", "green"],
         title="RSI Index for X:BTC-USD indicator",

@@ -1,9 +1,8 @@
-from dash import html, dcc
-
 from datetime import datetime, timedelta
 
-from common import BASE_CURRENCIES
-from common import TODAY_DATE
+from dash import html, dcc
+
+from common import BASE_CURRENCIES, TODAY_DATE
 from callbacks import CRYPTO_CURRENCIES
 
 

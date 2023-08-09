@@ -1,6 +1,6 @@
-from dash import html, dcc, dash_table
 import dash_daq as daq
 import dash_bootstrap_components as dbc
+from dash import html, dcc, dash_table
 
 from callbacks import df_short_fng
 

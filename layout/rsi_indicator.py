@@ -1,5 +1,5 @@
-from dash import html, dcc
 import dash_bootstrap_components as dbc
+from dash import html, dcc
 
 
 rsi_index_info = (

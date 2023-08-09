@@ -1,14 +1,13 @@
-import os
-import pandas as pd
-import time
-import requests
-import json
 import datetime
+import json
+import os
+import time
+from collections import OrderedDict
 
-from sqlalchemy import create_engine
-from sqlalchemy import Column, String, Integer, Float
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
+import pandas as pd
+import requests
+from sqlalchemy import create_engine, Column, String, Integer, Float
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 
 engine = create_engine('sqlite:///exchange_rates_cache.sqlite', echo=False)
@@ -19,6 +18,7 @@ session = db_session()
 
 class ExchangeRates(base):
     __tablename__ = "exchange_rates"
+
     id = Column(Integer, primary_key=True)
     date = Column(String)
     USD = Column(Float)
@@ -106,7 +106,6 @@ def preapre_data_for_crypto_main_line_graph(start_time, end_time, CRYPTO_CURRENC
 
 
 def prepare_data_for_fear_and_greed_index():
-    from collections import OrderedDict
     fng_url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
     try:
         response = requests.request("GET", fng_url)

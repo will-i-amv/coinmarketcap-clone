@@ -1,9 +1,8 @@
-from dash import html, dash_table
 import dash_daq as daq
 import dash_bootstrap_components as dbc
+from dash import html, dash_table
 
-from common import COLORS
-from common import BASE_CURRENCIES
+from common import COLORS, BASE_CURRENCIES
 
 
 warning_message = (
