@@ -234,8 +234,15 @@ def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):
         .first()
     )
     if not existing_record:
-        data_record = ExchangeRates(None, datetime.date.today(
-        ), usd_price, pln_price, eur_price, gbp_price, chf_price)
+        data_record = ExchangeRates(
+            id=None, 
+            date=datetime.date.today(), 
+            USD=usd_price, 
+            PLN=pln_price, 
+            EUR=eur_price, 
+            GBP=gbp_price, 
+            CHF=chf_price
+        )
         session.add(data_record)
         session.commit()
 
@@ -250,13 +257,13 @@ def check_cache_database():
     existing_records = session.query(ExchangeRates).all()
     if not existing_records:
         data_record = ExchangeRates(
-            None,
-            date,
-            usd_price,
-            pln_price,
-            eur_price,
-            gbp_price,
-            chf_price
+            id=None,
+            date=date,
+            USD=usd_price,
+            PLN=pln_price,
+            EUR=eur_price,
+            GBP=gbp_price,
+            CHF=chf_price
         )
         session.add(data_record)
         session.commit()
@@ -280,9 +287,9 @@ def get_from_cache_database(base_currency):
         base = float(last_record.CHF)
     else:
         base = float(last_record.USD)
-    usd_price = round(float(last_record.USD)/base, 2)
-    pln_price = round(float(last_record.PLN)/base, 2)
-    eur_price = round(float(last_record.EUR)/base, 2)
-    gbp_price = round(float(last_record.GBP)/base, 2)
-    chf_price = round(float(last_record.CHF)/base, 2)
+    usd_price = round(float(last_record.USD) / base, 2)
+    pln_price = round(float(last_record.PLN) / base, 2)
+    eur_price = round(float(last_record.EUR) / base, 2)
+    gbp_price = round(float(last_record.GBP) / base, 2)
+    chf_price = round(float(last_record.CHF) / base, 2)
     return last_record.date, usd_price, pln_price, eur_price, gbp_price, chf_price
