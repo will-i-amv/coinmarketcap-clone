@@ -3,8 +3,8 @@ import dash_bootstrap_components as dbc
 
 
 rsi_index_info = (
-
-    html.Div(children=[
+    html.Div(
+        children=[
             dbc.Button(
                 "What is Relative Strength Indicator?",
                 id="rsi-collapse-button",
@@ -13,45 +13,45 @@ rsi_index_info = (
                 n_clicks=0,
             ),
             dbc.Collapse(
-                dbc.Card(dbc.CardBody("One of the market indicators of technical analysis of the financial markets that serves as a speed oscillator that measures the speed and change of price movements. It oscillates between 0 and 100. It is assumed that when the RSI is at the level of 70 and above, it is a cryptocurrency sell signal (market overbought signal). If the RSI is at 30 and below, it is a cryptocurrency buy signal (market oversold signal). When the RSI is at 0, it means that the probability of a reversal of the trend to an upward one is highly probable. The RSI works by taking into account recent price movements exponentially, with the most recent changes weighing more heavily than older ones."),
+                dbc.Card(
+                    dbc.CardBody(
+                        "One of the market indicators of technical analysis of the financial markets that serves as a speed oscillator that measures the speed and change of price movements. It oscillates between 0 and 100. It is assumed that when the RSI is at the level of 70 and above, it is a cryptocurrency sell signal (market overbought signal). If the RSI is at 30 and below, it is a cryptocurrency buy signal (market oversold signal). When the RSI is at 0, it means that the probability of a reversal of the trend to an upward one is highly probable. The RSI works by taking into account recent price movements exponentially, with the most recent changes weighing more heavily than older ones."
+                    ),
                     className="collaps-button-area"
                 ),
-                    id="rsi-collapse",
-                    is_open=False,
-                ),
-            ],
-            className='main-fng-box'
-        )
-)
-
-
-rsi_select_period = (
-
-    html.Section(children=[
-        html.Div(children=[
-            html.Label(
-                'Select time range:',
+                id="rsi-collapse",
+                is_open=False,
             ),
-            dcc.Dropdown(
-                id='rsi-checklist',
-                options= ['Last Day', 'Last Week', 'Last Two Weeks', 'Last Month'],
-                value = "Last Two Weeks",
-            )
         ],
-            className='select-data higher-width'
-        ),
-    ],
+        className='main-fng-box'
+    )
+)
+rsi_select_period = (
+    html.Section(
+        children=[
+            html.Div(
+                children=[
+                    html.Label('Select time range:'),
+                    dcc.Dropdown(
+                        id='rsi-checklist',
+                        options=[
+                            'Last Day',
+                            'Last Week',
+                            'Last Two Weeks',
+                            'Last Month'
+                        ],
+                        value="Last Two Weeks",
+                    )
+                ],
+                className='select-data higher-width'
+            ),
+        ],
         className='main-options'
     )
 )
-
-
 rsi_index_line_graph = (
-
     html.Section(
-        dcc.Graph(
-            id="rsi-line-graph"
-        ),
+        dcc.Graph(id="rsi-line-graph"),
         className='graph-container'
     )
 )
