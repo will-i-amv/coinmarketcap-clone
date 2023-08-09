@@ -11,8 +11,8 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
-    prepare_crypto_list, prepare_data_for_crypto_main_line_graph, 
-    prepare_data_for_fear_and_greed_index, prepare_data_for_rsi_indicator, 
+    prepare_crypto_list, prepare_data_for_crypto_main_line_graph,
+    prepare_data_for_fear_and_greed_index, prepare_data_for_rsi_indicator,
     prepare_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
 )
 
@@ -168,55 +168,54 @@ def create_ranking_table(base_currency):
             "(https://cryptologos.cc/)"
         )
     try:
-        df = pd.DataFrame(dict([
-            ("Pos", [pos+1 for pos in range(len(crypto_names))]),
-            ("Logo", [url for url in markdown_urls]),
-            ("Crypto Name", [
-             crypto_name for crypto_name in list(df_assets['name'])]),
-            ("Symbol", [symbol for symbol in crypto_symbols]),
-            (f"Price[{base_currency}]", [
+        df = pd.DataFrame({
+            "Pos": [pos+1 for pos in range(len(crypto_names))],
+            "Logo": [url for url in markdown_urls],
+            "Crypto Name": [crypto_name for crypto_name in list(df_assets['name'])],
+            "Symbol": [symbol for symbol in crypto_symbols],
+            f"Price[{base_currency}]": [
                 round((float(price)*usd_rate), 4)
                 for price in list(df_assets['priceUsd'])
-            ]),
-            ("Supply", [
+            ],
+            "Supply": [
                 round(float(supply), 2)
                 for supply in list(df_assets['supply'])
-            ]),
-            (f"MarketCap[{base_currency}]", [
+            ],
+            f"MarketCap[{base_currency}]": [
                 round((float(market_cap)*usd_rate), 2)
                 for market_cap in list(df_assets['marketCapUsd'])
-            ]),
-            ("Change24h[%]", [
+            ],
+            "Change24h[%]": [
                 round(float(change), 2)
                 for change in list(df_assets['changePercent24Hr'])
-            ]),
-        ]))
+            ],
+        })
     except:
-        df = pd.DataFrame(dict([
-            ("Pos", [pos+1 for pos in range(len(crypto_names))]),
-            ("Logo", [url for url in markdown_urls]),
-            ("Crypto Name", [
+        df = pd.DataFrame({
+            "Pos": [pos+1 for pos in range(len(crypto_names))],
+            "Logo": [url for url in markdown_urls],
+            "Crypto Name": [
                 crypto_name
                 for crypto_name in list(df_assets['name'])
-            ]),
-            ("Symbol", [symbol for symbol in crypto_symbols]),
-            (f"Price[{base_currency}]", [
+            ],
+            "Symbol": [symbol for symbol in crypto_symbols],
+            f"Price[{base_currency}]": [
                 round((float(price)*usd_rate), 4)
                 for price in list(df_assets['priceUsd'])
-            ]),
-            ("Supply", [
+            ],
+            "Supply": [
                 round(float(supply), 2)
                 for supply in list(df_assets['supply'])
-            ]),
-            (f"MarketCap[{base_currency}]", [
+            ],
+            f"MarketCap[{base_currency}]": [
                 round((float(market_cap)*usd_rate), 2)
                 for market_cap in list(df_assets['marketCapUsd'])
-            ]),
-            ("Change24h[%]", [
+            ],
+            "Change24h[%]": [
                 change
                 for change in list(df_assets['changePercent24Hr'])
-            ]),
-        ]))
+            ],
+        })
     data = df.to_dict("records")
     columns = [
         {"id": "Pos", "name": "Pos"},
