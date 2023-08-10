@@ -11,7 +11,7 @@ from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
-engine = create_engine('sqlite:///exchange_rates_cache.sqlite', echo=False)
+engine = create_engine('sqlite:///exchange_rates_cache.db', echo=False)
 base = declarative_base()
 db_session = sessionmaker(bind=engine)
 session = db_session()
