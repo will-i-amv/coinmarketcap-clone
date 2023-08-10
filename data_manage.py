@@ -89,36 +89,39 @@ def get_price_data(start_time, end_time, currencies):
     return df_main_graph
 
 
-def prepare_data_for_fear_and_greed_index():
-    fng_url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
+def get_fear_greed_data():
+    url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
     try:
-        response = requests.request("GET", fng_url)
+        response = requests.get(url)
         json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["data"]
-        df_fng = pd.DataFrame(data)
-        df_fng['value'] = (
-            pd
-            .to_numeric(df_fng['value'], errors='coerce')
-            .fillna(0, downcast='infer')
+        df = pd.DataFrame(json_data["data"])
+        df_clean = (
+            df
+            .loc[:, ['value', 'value_classification', 'timestamp']]
+            .astype({'value': 'int64'})
         )
-        df_fng_temp = df_fng.loc[[0, 1, 6, 29, 364]]
-        labels_list = [label for label in df_fng_temp['value_classification']]
-        values_list = [value for value in df_fng_temp['value']]
-        fng_table_data = OrderedDict([
-            ("Time", [
+        df_clean_sampled = (
+            df_clean
+            .loc[[0, 1, 6, 29, 364], :]
+            .assign(Time=[
                 "Now",
                 "Yesterday",
                 "Week ago",
                 "Month ago",
                 "Year ago"
-            ]),
-            ("Label", labels_list),
-            ("Value", values_list),
-        ])
-        df_short_fng = pd.DataFrame(fng_table_data)
+            ])
+            .rename(columns={'value': 'Value', 'value_classification': 'Label'})
+            .drop(labels=['timestamp'], axis=1)
+            .reset_index(drop=True)
+        )
     except:
-        df_short_fng = pd.DataFrame()
-    return df_fng, df_short_fng
+        df_clean = pd.DataFrame({
+            'value': [], 
+            'value_classification': [], 
+            'timestamp': []
+        })
+        df_clean_sampled = pd.DataFrame({'Value': [], 'Label': [], 'Time': []})
+    return (df_clean, df_clean_sampled)
 
 
 def prepare_data_for_rsi_indicator():
@@ -219,12 +222,12 @@ def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):
     )
     if not existing_record:
         data_record = ExchangeRates(
-            id=None, 
-            date=datetime.date.today(), 
-            USD=usd_price, 
-            PLN=pln_price, 
-            EUR=eur_price, 
-            GBP=gbp_price, 
+            id=None,
+            date=datetime.date.today(),
+            USD=usd_price,
+            PLN=pln_price,
+            EUR=eur_price,
+            GBP=gbp_price,
             CHF=chf_price
         )
         session.add(data_record)

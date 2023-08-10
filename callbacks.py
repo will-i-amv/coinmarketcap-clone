@@ -12,16 +12,13 @@ from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
     get_names, get_price_data,
-    prepare_data_for_fear_and_greed_index, prepare_data_for_rsi_indicator,
+    get_fear_greed_data, prepare_data_for_rsi_indicator,
     prepare_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
 )
 
 
-CRYPTO_CURRENCIES = get_names()
-
-
 ##### Main crypto graph section #####
-
+CRYPTO_CURRENCIES = get_names()
 default_start_time = datetime.datetime(2015, 1, 1)
 default_end_time = datetime.datetime.now()
 df_main_graph = get_price_data(
@@ -237,7 +234,7 @@ def create_ranking_table(base_currency):
 
 
 ##### Fear and greed index section #####
-df_fng, df_short_fng = prepare_data_for_fear_and_greed_index()
+df_fng, df_short_fng = get_fear_greed_data()
 
 
 @app.callback(
