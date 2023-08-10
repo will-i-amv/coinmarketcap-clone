@@ -1,4 +1,5 @@
 import datetime
+import functools as ft
 import json
 import os
 import time
@@ -54,54 +55,39 @@ def prepare_crypto_list():
     return crypto_names
 
 
-def prepare_data_for_crypto_main_line_graph(start_time, end_time, CRYPTO_CURRENCIES):
-    unix_start_time = time.mktime(start_time.timetuple())*1000
-    unix_end_time = time.mktime(end_time.timetuple())*1000
+def get_price_data(start_time, end_time, currencies):
+    unix_start_time = time.mktime(start_time.timetuple()) * 1000
+    unix_end_time = time.mktime(end_time.timetuple()) * 1000
     try:
-        for currency in CRYPTO_CURRENCIES:
+        list_of_dfs = []
+        for currency in currencies:
             url = (
-                f"http://api.coincap.io/v2/assets/{currency}/history?" +
-                f"interval=d1&start={unix_start_time}&end={unix_end_time}"
+                f"http://api.coincap.io/v2/assets/{currency}/history?interval=d1" +
+                f"&start={unix_start_time}&end={unix_end_time}"
             )
-            payload = {}
-            headers = {}
-            response = requests.request(
-                "GET",
-                url,
-                headers=headers,
-                data=payload
+            response = requests.get(url).text.encode('utf8')
+            df = pd.DataFrame(json.loads(response)["data"])
+            df_cleaned = (
+                df
+                .assign(date=lambda x: x['date'].str.replace('T00:00:00.000Z', ''))
+                .astype({'priceUsd': 'float64', 'date': 'datetime64[ns]'})
+                .rename(columns={'priceUsd': f'{currency}'})
+                .drop(labels=['time'], axis=1)
             )
-            json_data = json.loads(response.text.encode('utf8'))
-            data = json_data["data"]
-            df_temp = pd.DataFrame(data)
-            df_temp[currency] = (
-                pd
-                .to_numeric(df_temp['priceUsd'], errors='coerce')
-                .fillna(0, downcast='infer')
+            list_of_dfs.append(df_cleaned)
+        df_main_graph = (
+            ft.reduce(
+                lambda x, y: pd.merge(x, y, on=['date'], how='outer'),
+                list_of_dfs
             )
-            df_temp['date'] = pd.to_datetime(
-                df_temp['date'],
-                dayfirst=False,
-                utc=False,
-                format='%Y-%m-%d'
-            )
-            if currency == 'bitcoin':
-                df_main_graph = pd.DataFrame()
-                df_main_graph['date'] = df_temp['date']
-                df_main_graph[currency] = df_temp[currency]
-            else:
-                df_main_graph = df_main_graph.merge(
-                    df_temp,
-                    on='date',
-                    how='left'
-                )
-                df_main_graph = df_main_graph.drop(
-                    labels=["priceUsd", "time"],
-                    axis=1
-                )
-        # df_main_graph.to_csv('crypto-usd.csv', index=False)
+            .fillna(0)
+            .sort_values(by=['date'])
+        )
     except:
-        df_main_graph = pd.DataFrame()
+        df_main_graph = pd.DataFrame({
+            label: []
+            for label in ['date'] + currencies
+        })
     return df_main_graph
 
 

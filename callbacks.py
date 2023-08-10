@@ -11,7 +11,7 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
-    prepare_crypto_list, prepare_data_for_crypto_main_line_graph,
+    prepare_crypto_list, get_price_data,
     prepare_data_for_fear_and_greed_index, prepare_data_for_rsi_indicator,
     prepare_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
 )
@@ -24,7 +24,7 @@ CRYPTO_CURRENCIES = prepare_crypto_list()
 
 default_start_time = datetime.datetime(2015, 1, 1)
 default_end_time = datetime.datetime.now()
-df_main_graph = prepare_data_for_crypto_main_line_graph(
+df_main_graph = get_price_data(
     default_start_time,
     default_end_time,
     CRYPTO_CURRENCIES
