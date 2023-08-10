@@ -42,14 +42,12 @@ base.metadata.create_all(engine)
 api_key_polygon = os.environ['api_key_polygon']
 
 
-def prepare_crypto_list():
-    coincapapi_url = 'http://api.coincap.io/v2/assets?limit=10'
+def get_names():
+    url = 'http://api.coincap.io/v2/assets?limit=10'
     try:
-        response = requests.request("GET", coincapapi_url)
+        response = requests.get(url)
         json_data = json.loads(response.text.encode('utf8'))
-        assets = json_data["data"]
-        df_assets = pd.DataFrame(assets)
-        crypto_names = list(df_assets['id'])
+        crypto_names = pd.DataFrame(json_data["data"]).loc[:, 'id'].to_list()
     except:
         crypto_names = []
     return crypto_names

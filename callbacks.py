@@ -11,13 +11,13 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
-    prepare_crypto_list, get_price_data,
+    get_names, get_price_data,
     prepare_data_for_fear_and_greed_index, prepare_data_for_rsi_indicator,
     prepare_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
 )
 
 
-CRYPTO_CURRENCIES = prepare_crypto_list()
+CRYPTO_CURRENCIES = get_names()
 
 
 ##### Main crypto graph section #####
