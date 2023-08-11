@@ -124,20 +124,23 @@ def get_fear_greed_data():
     return (df_clean, df_clean_sampled)
 
 
-def prepare_data_for_rsi_indicator():
-    rsi_url = (
-        f'https://api.polygon.io/v1/indicators/rsi/X:BTCUSD?timespan=hour&window=14' +
-        f'&series_type=close&expand_underlying=false&order=desc&limit=700&apiKey={api_key_polygon}'
+def get_rsi_data():
+    url = (
+        f'https://api.polygon.io/v1/indicators/rsi/X:BTCUSD' + 
+        f'?timespan=hour&window=14&series_type=close&expand_underlying=false' + 
+        f'&order=desc&limit=700&apiKey={api_key_polygon}'
     )
     try:
-        response = requests.request("GET", rsi_url)
+        response = requests.get(url)
         json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["results"]["values"]
-        df_rsi = pd.DataFrame(data)
-        df_rsi['timestamp'] = df_rsi['timestamp'].astype('datetime64[ms]')
+        df = (
+            pd
+            .DataFrame(json_data["results"]["values"])
+            .astype({'timestamp': 'datetime64[ms]'})
+        )
     except:
-        df_rsi = pd.DataFrame()
-    return df_rsi
+        df = pd.DataFrame({'timestamp': [], 'value': []})
+    return df
 
 
 def prepare_data_for_ma_50_and_200_indicator():

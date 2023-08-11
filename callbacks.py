@@ -12,7 +12,7 @@ from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
     get_names, get_price_data,
-    get_fear_greed_data, prepare_data_for_rsi_indicator,
+    get_fear_greed_data, get_rsi_data,
     prepare_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
 )
 
@@ -278,7 +278,7 @@ def display_fng_series(time_range):
 
 
 ###### RSI indicator section #######
-df_rsi = prepare_data_for_rsi_indicator()
+df_rsi = get_rsi_data()
 
 
 @app.callback(
