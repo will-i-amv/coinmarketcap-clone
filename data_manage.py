@@ -68,7 +68,7 @@ def get_price_data(start_time, end_time, currencies):
             df_cleaned = (
                 df
                 .assign(date=lambda x: x['date'].str.replace('T00:00:00.000Z', ''))
-                .astype({'priceUsd': 'float64', 'date': 'datetime64[ns]'})
+                .astype({'priceUsd': 'float64', 'date': 'datetime64[ms]'})
                 .rename(columns={'priceUsd': f'{currency}'})
                 .drop(labels=['time'], axis=1)
             )
@@ -182,7 +182,7 @@ def get_ma_data(window):
         df = (
             df_sma_ema
             .merge(df_btc_price, on='timestamp', how='left')
-            .astype({'timestamp': 'datetime64[ns]'})
+            .astype({'timestamp': 'datetime64[ms]'})
             .rename(columns={
                 'value_x': 'SMA',
                 'value_y': 'EMA',
