@@ -11,20 +11,16 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
-    prepare_crypto_list, prepare_data_for_crypto_main_line_graph,
-    prepare_data_for_fear_and_greed_index, prepare_data_for_rsi_indicator,
-    prepare_data_for_ma_50_and_200_indicator, save_exchange_rates, get_from_cache_database
+    get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data, 
+    save_exchange_rates, get_from_cache_database
 )
 
 
-CRYPTO_CURRENCIES = prepare_crypto_list()
-
-
 ##### Main crypto graph section #####
-
+CRYPTO_CURRENCIES = get_names()
 default_start_time = datetime.datetime(2015, 1, 1)
 default_end_time = datetime.datetime.now()
-df_main_graph = prepare_data_for_crypto_main_line_graph(
+df_main_graph = get_price_data(
     default_start_time,
     default_end_time,
     CRYPTO_CURRENCIES
@@ -237,7 +233,7 @@ def create_ranking_table(base_currency):
 
 
 ##### Fear and greed index section #####
-df_fng, df_short_fng = prepare_data_for_fear_and_greed_index()
+df_fng, df_short_fng = get_fear_greed_data()
 
 
 @app.callback(
@@ -281,7 +277,7 @@ def display_fng_series(time_range):
 
 
 ###### RSI indicator section #######
-df_rsi = prepare_data_for_rsi_indicator()
+df_rsi = get_rsi_data()
 
 
 @app.callback(
@@ -329,7 +325,8 @@ def rsi_toggle_collapse(n, is_open):
 
 
 ###### MA-50 and Ma-200 indicator section #######
-df_ma50, df_ma200 = prepare_data_for_ma_50_and_200_indicator()
+df_ma50 = get_ma_data(window='50')
+df_ma200 = get_ma_data(window='180')
 
 
 @app.callback(

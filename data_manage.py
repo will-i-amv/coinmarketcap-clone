@@ -1,8 +1,8 @@
 import datetime
+import functools as ft
 import json
 import os
 import time
-from collections import OrderedDict
 
 import pandas as pd
 import requests
@@ -10,7 +10,9 @@ from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
-engine = create_engine('sqlite:///exchange_rates_cache.sqlite', echo=False)
+POLYGON_API_KEY = os.environ.get('POLYGON_API_KEY')
+
+engine = create_engine('sqlite:///exchange_rates_cache.db', echo=False)
 base = declarative_base()
 db_session = sessionmaker(bind=engine)
 session = db_session()
@@ -38,148 +40,107 @@ class ExchangeRates(base):
 
 
 base.metadata.create_all(engine)
-api_key_polygon = os.environ['api_key_polygon']
 
 
-def prepare_crypto_list():
-    coincapapi_url = 'http://api.coincap.io/v2/assets?limit=10'
+def get_names():
+    url = 'http://api.coincap.io/v2/assets?limit=10'
     try:
-        response = requests.request("GET", coincapapi_url)
+        response = requests.get(url)
         json_data = json.loads(response.text.encode('utf8'))
-        assets = json_data["data"]
-        df_assets = pd.DataFrame(assets)
-        crypto_names = list(df_assets['id'])
+        crypto_names = pd.DataFrame(json_data["data"]).loc[:, 'id'].to_list()
     except:
         crypto_names = []
     return crypto_names
 
 
-def prepare_data_for_crypto_main_line_graph(start_time, end_time, CRYPTO_CURRENCIES):
-    unix_start_time = time.mktime(start_time.timetuple())*1000
-    unix_end_time = time.mktime(end_time.timetuple())*1000
+def get_price_data(start_time, end_time, currencies):
+    unix_start_time = time.mktime(start_time.timetuple()) * 1000
+    unix_end_time = time.mktime(end_time.timetuple()) * 1000
     try:
-        for currency in CRYPTO_CURRENCIES:
+        list_of_dfs = []
+        for currency in currencies:
             url = (
-                f"http://api.coincap.io/v2/assets/{currency}/history?" +
-                f"interval=d1&start={unix_start_time}&end={unix_end_time}"
+                f"http://api.coincap.io/v2/assets/{currency}/history?interval=d1" +
+                f"&start={unix_start_time}&end={unix_end_time}"
             )
-            payload = {}
-            headers = {}
-            response = requests.request(
-                "GET",
-                url,
-                headers=headers,
-                data=payload
+            response = requests.get(url).text.encode('utf8')
+            df = pd.DataFrame(json.loads(response)["data"])
+            df_cleaned = (
+                df
+                .assign(date=lambda x: x['date'].str.replace('T00:00:00.000Z', ''))
+                .astype({'priceUsd': 'float64', 'date': 'datetime64[ms]'})
+                .rename(columns={'priceUsd': f'{currency}'})
+                .drop(labels=['time'], axis=1)
             )
-            json_data = json.loads(response.text.encode('utf8'))
-            data = json_data["data"]
-            df_temp = pd.DataFrame(data)
-            df_temp[currency] = (
-                pd
-                .to_numeric(df_temp['priceUsd'], errors='coerce')
-                .fillna(0, downcast='infer')
+            list_of_dfs.append(df_cleaned)
+        df_main_graph = (
+            ft.reduce(
+                lambda x, y: pd.merge(x, y, on=['date'], how='outer'),
+                list_of_dfs
             )
-            df_temp['date'] = pd.to_datetime(
-                df_temp['date'],
-                dayfirst=False,
-                utc=False,
-                format='%Y-%m-%d'
-            )
-            if currency == 'bitcoin':
-                df_main_graph = pd.DataFrame()
-                df_main_graph['date'] = df_temp['date']
-                df_main_graph[currency] = df_temp[currency]
-            else:
-                df_main_graph = df_main_graph.merge(
-                    df_temp,
-                    on='date',
-                    how='left'
-                )
-                df_main_graph = df_main_graph.drop(
-                    labels=["priceUsd", "time"],
-                    axis=1
-                )
-        # df_main_graph.to_csv('crypto-usd.csv', index=False)
+            .fillna(0)
+            .sort_values(by=['date'])
+        )
     except:
-        df_main_graph = pd.DataFrame()
+        df_main_graph = pd.DataFrame({
+            label: []
+            for label in ['date'] + currencies
+        })
     return df_main_graph
 
 
-def prepare_data_for_fear_and_greed_index():
-    fng_url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
+def get_fear_greed_data():
+    url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
     try:
-        response = requests.request("GET", fng_url)
+        response = requests.get(url)
         json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["data"]
-        df_fng = pd.DataFrame(data)
-        df_fng['value'] = (
-            pd
-            .to_numeric(df_fng['value'], errors='coerce')
-            .fillna(0, downcast='infer')
+        df = pd.DataFrame(json_data["data"])
+        df_clean = (
+            df
+            .loc[:, ['value', 'value_classification', 'timestamp']]
+            .astype({'value': 'int64'})
         )
-        df_fng_temp = df_fng.loc[[0, 1, 6, 29, 364]]
-        labels_list = [label for label in df_fng_temp['value_classification']]
-        values_list = [value for value in df_fng_temp['value']]
-        fng_table_data = OrderedDict([
-            ("Time", [
+        df_clean_sampled = (
+            df_clean
+            .loc[[0, 1, 6, 29, 364], :]
+            .assign(Time=[
                 "Now",
                 "Yesterday",
                 "Week ago",
                 "Month ago",
                 "Year ago"
-            ]),
-            ("Label", labels_list),
-            ("Value", values_list),
-        ])
-        df_short_fng = pd.DataFrame(fng_table_data)
+            ])
+            .rename(columns={'value': 'Value', 'value_classification': 'Label'})
+            .drop(labels=['timestamp'], axis=1)
+            .reset_index(drop=True)
+        )
     except:
-        df_short_fng = pd.DataFrame()
-    return df_fng, df_short_fng
+        df_clean = pd.DataFrame({
+            'value': [], 
+            'value_classification': [], 
+            'timestamp': []
+        })
+        df_clean_sampled = pd.DataFrame({'Value': [], 'Label': [], 'Time': []})
+    return (df_clean, df_clean_sampled)
 
 
-def prepare_data_for_rsi_indicator():
-    rsi_url = (
-        f'https://api.polygon.io/v1/indicators/rsi/X:BTCUSD?timespan=hour&window=14' +
-        f'&series_type=close&expand_underlying=false&order=desc&limit=700&apiKey={api_key_polygon}'
+def get_rsi_data():
+    url = (
+        f'https://api.polygon.io/v1/indicators/rsi/X:BTCUSD' + 
+        f'?timespan=hour&window=14&series_type=close&expand_underlying=false' + 
+        f'&order=desc&limit=700&apiKey={POLYGON_API_KEY}'
     )
     try:
-        response = requests.request("GET", rsi_url)
+        response = requests.get(url)
         json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["results"]["values"]
-        df_rsi = pd.DataFrame(data)
-        df_rsi['timestamp'] = df_rsi['timestamp'].astype('datetime64[ms]')
+        df = (
+            pd
+            .DataFrame(json_data["results"]["values"])
+            .astype({'timestamp': 'datetime64[ms]'})
+        )
     except:
-        df_rsi = pd.DataFrame()
-    return df_rsi
-
-
-def prepare_data_for_ma_50_and_200_indicator():
-    sma_url = f'https://api.polygon.io/v1/indicators/sma/X:BTCUSD?timespan=hour&window=50&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
-    ema_url = f'https://api.polygon.io/v1/indicators/ema/X:BTCUSD?timespan=hour&window=50&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
-    try:
-        response = requests.request("GET", sma_url)
-        json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["results"]["values"]
-        df_sma = pd.DataFrame(data)
-        response = requests.request("GET", ema_url)
-        json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["results"]["values"]
-        df_ema = pd.DataFrame(data)
-        df_ma50 = df_sma.merge(df_ema, on='timestamp', how='left')
-        df_btc_price = prepare_btc_price_for_ma_indicator(df_ma50)
-        df_ma50 = df_ma50.merge(df_btc_price, on='timestamp', how='left')
-        df_ma50['timestamp'] = df_ma50['timestamp'].astype('datetime64[ms]')
-        # df['timestamp'] = df['timestamp'].apply(lambda x: datetime.datetime.fromtimestamp(x/1000.0))
-        df_ma50 = df_ma50.rename(columns={
-            "value_x": "SMA",
-            "value_y": "EMA",
-            "priceUsd": "BTC price"
-        })
-        df_ma200 = prepare_data_for_ma_200_indicator(df_btc_price)
-    except:
-        df_ma50 = pd.DataFrame()
-        df_ma200 = pd.DataFrame()
-    return df_ma50, df_ma200
+        df = pd.DataFrame({'timestamp': [], 'value': []})
+    return df
 
 
 def prepare_btc_price_for_ma_indicator(df_ma50):
@@ -201,29 +162,36 @@ def prepare_btc_price_for_ma_indicator(df_ma50):
     return df_btc_price
 
 
-def prepare_data_for_ma_200_indicator(df_btc_price):
-    sma200_url = f'https://api.polygon.io/v1/indicators/sma/X:BTCUSD?timespan=hour&window=180&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
-    ema200_url = f'https://api.polygon.io/v1/indicators/ema/X:BTCUSD?timespan=hour&window=180&series_type=close&order=desc&limit=700&apiKey={api_key_polygon}'
+def get_ma_data(window):
+    base_url = lambda x: (
+        f'https://api.polygon.io/v1/indicators/{x}/X:BTCUSD?' + 
+        f'timespan=hour&window={window}&series_type=close&order=desc&limit=700' + 
+        f'&apiKey={POLYGON_API_KEY}'
+    )
+    sma_url = base_url('sma')
+    ema_url = base_url('ema')
     try:
-        response = requests.request("GET", sma200_url)
-        json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["results"]["values"]
-        df_sma200 = pd.DataFrame(data)
-        response = requests.request("GET", ema200_url)
-        json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["results"]["values"]
-        df_ema200 = pd.DataFrame(data)
-        df_ma200 = df_sma200.merge(df_ema200, on='timestamp', how='left')
-        df_ma200 = df_ma200.merge(df_btc_price, on='timestamp', how='left')
-        df_ma200['timestamp'] = df_ma200['timestamp'].astype('datetime64[ms]')
-        df_ma200 = df_ma200.rename(columns={
-            "value_x": "SMA",
-            "value_y": "EMA",
-            "priceUsd": "BTC price"
-        })
+        sma_response = requests.get(sma_url)
+        ema_response = requests.get(ema_url)
+        sma_json_data = json.loads(sma_response.text.encode('utf8'))
+        ema_json_data = json.loads(ema_response.text.encode('utf8'))
+        df_sma = pd.DataFrame(sma_json_data["results"]["values"])
+        df_ema = pd.DataFrame(ema_json_data["results"]["values"])
+        df_sma_ema = pd.merge(df_sma, df_ema, on='timestamp', how='left')
+        df_btc_price = prepare_btc_price_for_ma_indicator(df_sma_ema)
+        df = (
+            df_sma_ema
+            .merge(df_btc_price, on='timestamp', how='left')
+            .astype({'timestamp': 'datetime64[ms]'})
+            .rename(columns={
+                'value_x': 'SMA',
+                'value_y': 'EMA',
+                'priceUsd': 'BTC price'
+            })
+        )
     except:
-        df_ma200 = pd.DataFrame()
-    return df_ma200
+        df = pd.DataFrame()
+    return df
 
 
 def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):
@@ -235,12 +203,12 @@ def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):
     )
     if not existing_record:
         data_record = ExchangeRates(
-            id=None, 
-            date=datetime.date.today(), 
-            USD=usd_price, 
-            PLN=pln_price, 
-            EUR=eur_price, 
-            GBP=gbp_price, 
+            id=None,
+            date=datetime.date.today(),
+            USD=usd_price,
+            PLN=pln_price,
+            EUR=eur_price,
+            GBP=gbp_price,
             CHF=chf_price
         )
         session.add(data_record)
