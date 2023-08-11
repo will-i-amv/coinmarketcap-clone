@@ -16,7 +16,6 @@ engine = create_engine('sqlite:///exchange_rates_cache.db', echo=False)
 base = declarative_base()
 db_session = sessionmaker(bind=engine)
 session = db_session()
-base.metadata.create_all(engine)
 
 
 class ExchangeRates(base):
@@ -38,6 +37,9 @@ class ExchangeRates(base):
         self.EUR = EUR
         self.GBP = GBP
         self.CHF = CHF
+
+
+base.metadata.create_all(engine)
 
 
 def get_names():
