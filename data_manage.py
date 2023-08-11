@@ -3,7 +3,6 @@ import functools as ft
 import json
 import os
 import time
-from collections import OrderedDict
 
 import pandas as pd
 import requests
@@ -11,10 +10,13 @@ from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
+POLYGON_API_KEY = os.environ.get('POLYGON_API_KEY')
+
 engine = create_engine('sqlite:///exchange_rates_cache.db', echo=False)
 base = declarative_base()
 db_session = sessionmaker(bind=engine)
 session = db_session()
+base.metadata.create_all(engine)
 
 
 class ExchangeRates(base):
@@ -36,10 +38,6 @@ class ExchangeRates(base):
         self.EUR = EUR
         self.GBP = GBP
         self.CHF = CHF
-
-
-base.metadata.create_all(engine)
-POLYGON_API_KEY = os.environ.get('POLYGON_API_KEY')
 
 
 def get_names():
