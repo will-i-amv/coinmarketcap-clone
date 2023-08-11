@@ -65,7 +65,7 @@ The visitor has the option of choosing the displayed data not only because of th
 - Clone repository
 * Rename .env.example to `.env` and set your value (get free API key from polygon.io platfrom)
 ```
-api_key_polygon = <your_api_key>
+POLYGON_API_KEY = <your_api_key>
 ```
 
 * Install packages from `requirements.txt`

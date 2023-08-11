@@ -39,7 +39,7 @@ class ExchangeRates(base):
 
 
 base.metadata.create_all(engine)
-api_key_polygon = os.environ['api_key_polygon']
+POLYGON_API_KEY = os.environ.get('POLYGON_API_KEY')
 
 
 def get_names():
@@ -128,7 +128,7 @@ def get_rsi_data():
     url = (
         f'https://api.polygon.io/v1/indicators/rsi/X:BTCUSD' + 
         f'?timespan=hour&window=14&series_type=close&expand_underlying=false' + 
-        f'&order=desc&limit=700&apiKey={api_key_polygon}'
+        f'&order=desc&limit=700&apiKey={POLYGON_API_KEY}'
     )
     try:
         response = requests.get(url)
@@ -166,7 +166,7 @@ def get_ma_data(window):
     base_url = lambda x: (
         f'https://api.polygon.io/v1/indicators/{x}/X:BTCUSD?' + 
         f'timespan=hour&window={window}&series_type=close&order=desc&limit=700' + 
-        f'&apiKey={api_key_polygon}'
+        f'&apiKey={POLYGON_API_KEY}'
     )
     sma_url = base_url('sma')
     ema_url = base_url('ema')
