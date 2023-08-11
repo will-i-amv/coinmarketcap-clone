@@ -162,10 +162,10 @@ def prepare_btc_price_for_ma_indicator(df_ma50):
     return df_btc_price
 
 
-def prepare_data_for_ma_50_indicator():
+def get_ma_data(window):
     base_url = lambda x: (
         f'https://api.polygon.io/v1/indicators/{x}/X:BTCUSD?' + 
-        f'timespan=hour&window=50&series_type=close&order=desc&limit=700' + 
+        f'timespan=hour&window={window}&series_type=close&order=desc&limit=700' + 
         f'&apiKey={api_key_polygon}'
     )
     sma_url = base_url('sma')
@@ -179,7 +179,7 @@ def prepare_data_for_ma_50_indicator():
         df_ema = pd.DataFrame(ema_json_data["results"]["values"])
         df_sma_ema = pd.merge(df_sma, df_ema, on='timestamp', how='left')
         df_btc_price = prepare_btc_price_for_ma_indicator(df_sma_ema)
-        df_ma50 = (
+        df = (
             df_sma_ema
             .merge(df_btc_price, on='timestamp', how='left')
             .astype({'timestamp': 'datetime64[ns]'})
@@ -190,40 +190,8 @@ def prepare_data_for_ma_50_indicator():
             })
         )
     except:
-        df_ma50 = pd.DataFrame()
-    return df_ma50
-
-
-def prepare_data_for_ma_200_indicator():
-    base_url = lambda x: (
-        f'https://api.polygon.io/v1/indicators/{x}/X:BTCUSD?' + 
-        f'timespan=hour&window=180&series_type=close&order=desc&limit=700' + 
-        f'&apiKey={api_key_polygon}'
-    )
-    sma_url = base_url('sma')
-    ema_url = base_url('ema')
-    try:
-        sma_response = requests.get(sma_url)
-        ema_response = requests.get(ema_url)
-        sma_json_data = json.loads(sma_response.text.encode('utf8'))
-        ema_json_data = json.loads(ema_response.text.encode('utf8'))
-        df_sma = pd.DataFrame(sma_json_data["results"]["values"])
-        df_ema = pd.DataFrame(ema_json_data["results"]["values"])
-        df_sma_ema = pd.merge(df_sma, df_ema, on='timestamp', how='left')
-        df_btc_price = prepare_btc_price_for_ma_indicator(df_sma_ema)
-        df_ma200 = (
-            df_sma_ema
-            .merge(df_btc_price, on='timestamp', how='left')
-            .astype({'timestamp': 'datetime64[ns]'})
-            .rename(columns={
-                'value_x': 'SMA',
-                'value_y': 'EMA',
-                'priceUsd': 'BTC price'
-            })
-        )
-    except:
-        df_ma200 = pd.DataFrame()
-    return df_ma200
+        df = pd.DataFrame()
+    return df
 
 
 def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):

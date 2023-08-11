@@ -11,8 +11,7 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import BASE_CURRENCIES, COLORS
 from data_manage import (
-    get_names, get_price_data, get_fear_greed_data, get_rsi_data,
-    prepare_data_for_ma_50_indicator, prepare_data_for_ma_200_indicator, 
+    get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data, 
     save_exchange_rates, get_from_cache_database
 )
 
@@ -326,8 +325,8 @@ def rsi_toggle_collapse(n, is_open):
 
 
 ###### MA-50 and Ma-200 indicator section #######
-df_ma50 = prepare_data_for_ma_50_indicator()
-df_ma200 = prepare_data_for_ma_200_indicator()
+df_ma50 = get_ma_data(window='50')
+df_ma200 = get_ma_data(window='180')
 
 
 @app.callback(
