@@ -9,7 +9,7 @@ from dash import Input, Output, State
 from forex_python.converter import CurrencyRates
 
 from app import app
-from common import BASE_CURRENCIES, COLORS
+from common import CURRENCY_SYMBOLS, COLORS
 from data_manage import (
     get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data, 
     save_exchange_rates, get_from_cache_database
@@ -141,7 +141,7 @@ def create_ranking_table(base_currency):
         )
         usd_rate = 1/usd_price
     coincapapi_url = 'http://api.coincap.io/v2/assets?limit=10'
-    base_currency = BASE_CURRENCIES[base_currency]
+    base_currency = CURRENCY_SYMBOLS[base_currency]
     response = requests.request("GET", coincapapi_url)
     json_data = json.loads(response.text.encode('utf8'))
     assets = json_data["data"]
