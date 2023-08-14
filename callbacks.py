@@ -87,7 +87,7 @@ alert_message = True
     ],
     [Input('base-currency', 'value')]
 )
-def get_exchange_rates(base_currency):
+def display_exchange_rates(base_currency):
     try:
         currency_rates = CurrencyRates()
         usd_price = round(currency_rates.get_rate(base_currency, 'USD'), 2)
@@ -120,7 +120,7 @@ def get_exchange_rates(base_currency):
     Output('table-header', 'children'),
     [Input('base-currency', 'value')]
 )
-def create_table_header(base_currency):
+def display_ranking_table_header(base_currency):
     return f'Ranking of 10 ten most popular cryptocurrencies in {base_currency}:'
 
 
@@ -131,7 +131,7 @@ def create_table_header(base_currency):
     ],
     [Input('base-currency', 'value')]
 )
-def create_ranking_table(base_currency):
+def display_ranking_table_body(base_currency):
     try:
         currency_rates = CurrencyRates()
         usd_rate = currency_rates.get_rate('USD', base_currency)
