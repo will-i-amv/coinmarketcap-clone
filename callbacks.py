@@ -11,7 +11,7 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import CURRENCY_SYMBOLS, COLORS
 from data_manage import (
-    get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data, 
+    get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data,
     save_exchange_rates, get_from_cache_database
 )
 
@@ -140,94 +140,65 @@ def create_ranking_table(base_currency):
             base_currency
         )
         usd_rate = 1/usd_price
-    coincapapi_url = 'http://api.coincap.io/v2/assets?limit=10'
-    base_currency = CURRENCY_SYMBOLS[base_currency]
-    response = requests.request("GET", coincapapi_url)
+    url = 'http://api.coincap.io/v2/assets?limit=10'
+    curr_symbol = CURRENCY_SYMBOLS[base_currency]
+    response = requests.get(url)
     json_data = json.loads(response.text.encode('utf8'))
-    assets = json_data["data"]
-    df_assets = pd.DataFrame(assets)
-    crypto_symbols = list(df_assets['symbol'])
-    crypto_names = list(df_assets['id'])
-    crypto_url_logo_names = []
-    for index in range(len(crypto_names)):
-        crypto_url_logo_names.append(
-            crypto_names[index] +
-            "-" +
-            crypto_symbols[index].lower()
-        )
-    markdown_urls = []
-    for logo_name in crypto_url_logo_names:
-        markdown_urls.append(
-            f"[![Coin](https://cryptologos.cc/logos/{logo_name}-logo.svg?v=023#thumbnail)]" +
-            "(https://cryptologos.cc/)"
-        )
-    try:
-        df = pd.DataFrame({
-            "Pos": [pos+1 for pos in range(len(crypto_names))],
-            "Logo": [url for url in markdown_urls],
-            "Crypto Name": [crypto_name for crypto_name in list(df_assets['name'])],
-            "Symbol": [symbol for symbol in crypto_symbols],
-            f"Price[{base_currency}]": [
-                round((float(price)*usd_rate), 4)
-                for price in list(df_assets['priceUsd'])
-            ],
-            "Supply": [
-                round(float(supply), 2)
-                for supply in list(df_assets['supply'])
-            ],
-            f"MarketCap[{base_currency}]": [
-                round((float(market_cap)*usd_rate), 2)
-                for market_cap in list(df_assets['marketCapUsd'])
-            ],
-            "Change24h[%]": [
-                round(float(change), 2)
-                for change in list(df_assets['changePercent24Hr'])
-            ],
+    df = pd.DataFrame(json_data["data"])
+    df_cleaned = (
+        df
+        .astype({
+            'rank': 'int64',
+            'priceUsd': 'float64',
+            'supply': 'float64',
+            'marketCapUsd': 'float64',
+            'changePercent24Hr': 'float64',
         })
-    except:
-        df = pd.DataFrame({
-            "Pos": [pos+1 for pos in range(len(crypto_names))],
-            "Logo": [url for url in markdown_urls],
-            "Crypto Name": [
-                crypto_name
-                for crypto_name in list(df_assets['name'])
-            ],
-            "Symbol": [symbol for symbol in crypto_symbols],
-            f"Price[{base_currency}]": [
-                round((float(price)*usd_rate), 4)
-                for price in list(df_assets['priceUsd'])
-            ],
-            "Supply": [
-                round(float(supply), 2)
-                for supply in list(df_assets['supply'])
-            ],
-            f"MarketCap[{base_currency}]": [
-                round((float(market_cap)*usd_rate), 2)
-                for market_cap in list(df_assets['marketCapUsd'])
-            ],
-            "Change24h[%]": [
-                change
-                for change in list(df_assets['changePercent24Hr'])
-            ],
+        .assign(
+            priceUsd=lambda x: x['priceUsd'] * usd_rate,
+            marketCapUsd=lambda x: x['marketCapUsd'] * usd_rate,
+            Logo=lambda x: (
+                '[![Coin](https://cryptologos.cc/logos/' +
+                x["id"] + "-" + x["symbol"].str.lower() +
+                '-logo.svg?v=023#thumbnail)](https://cryptologos.cc/)'
+            ),
+        )
+        .round({
+            'priceUsd': 4,
+            'supply': 2,
+            'marketCapUsd': 2,
+            'changePercent24Hr': 2,
         })
-    data = df.to_dict("records")
-    columns = [
-        {"id": "Pos", "name": "Pos"},
-        {"id": "Logo", "name": "Logo", "presentation": "markdown"},
-        {"id": "Crypto Name", "name": "Crypto Name"},
-        {"id": "Symbol", "name": "Symbol"},
-        {
-            "id": f"Price[{base_currency}]",
-            "name": f"Price[{base_currency}]"
-        },
-        {"id": "Supply", "name": "Supply"},
-        {
-            "id": f"MarketCap[{base_currency}]",
-            "name": f"MarketCap[{base_currency}]"
-        },
-        {"id": "Change24h[%]", "name": "Change24h[%]"},
-    ]
-    return columns, data
+        .rename(columns={
+            'rank': 'Pos',
+            'name': 'Crypto Name',
+            'symbol': 'Symbol',
+            'priceUsd': f'Price[{curr_symbol}]',
+            'marketCapUsd': f'MarketCap[{curr_symbol}]',
+            'supply': 'Supply',
+            'changePercent24Hr': "Change24h[%]",
+        })
+        .reindex(columns=[
+            'Pos', 'Logo', 'Crypto Name', 'Symbol',
+            f'Price[{curr_symbol}]', 'Supply',
+            f'MarketCap[{curr_symbol}]', 'Change24h[%]'
+        ])
+    )
+    data = df_cleaned.to_dict('records')
+    columns = []
+    for item in df_cleaned.columns.to_list():
+        if item == 'Logo':
+            columns.append({
+                'id': item, 
+                'name': item,
+                'presentation': 'markdown',
+            })
+        else:
+            columns.append({
+                'id': item, 
+                'name': item,
+            })
+    return (columns, data)
 
 
 ##### Fear and greed index section #####
