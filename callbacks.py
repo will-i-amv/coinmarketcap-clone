@@ -37,12 +37,8 @@ df_main_graph = get_price_data(
     ]
 )
 def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_date):
-    sent_start_time = parser.isoparse(start_date)
-    sent_end_time = parser.isoparse(end_date)
-    start_time_difference = sent_start_time - default_start_time
-    start_time_difference = start_time_difference.days
-    end_time_difference = sent_end_time - default_start_time
-    end_time_difference = end_time_difference.days
+    start_time = parser.isoparse(start_date)
+    end_time = parser.isoparse(end_date)
     try:
         currency_rates = CurrencyRates()
         usd_rate = currency_rates.get_rate('USD', base_currency)
@@ -51,11 +47,13 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
             base_currency
         )
         usd_rate = 1/usd_price
-    df = df_main_graph.copy(deep=True)
-    df = df[start_time_difference:end_time_difference]
-    for currency in CRYPTO_CURRENCIES:
-        df[currency] = df[currency].multiply(usd_rate)
-    # df = pd.read_csv('saved_data/crypto-usd.csv')
+    df = (
+        df_main_graph
+        .loc[lambda x: x['date'].between(start_time, end_time)]
+        .set_index('date')
+        .multiply(usd_rate)
+        .reset_index()
+    )
     fig = px.line(
         df,
         x='date',
