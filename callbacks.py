@@ -1,10 +1,7 @@
 import datetime as dt
-import json
 from dateutil import parser
 
-import pandas as pd
 import plotly.express as px
-import requests
 from dash import Input, Output, State
 from forex_python.converter import CurrencyRates
 
