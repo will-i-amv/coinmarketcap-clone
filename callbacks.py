@@ -1,29 +1,27 @@
-import datetime
-import json
+import datetime as dt
 from dateutil import parser
 
-import pandas as pd
 import plotly.express as px
-import requests
 from dash import Input, Output, State
 from forex_python.converter import CurrencyRates
 
 from app import app
-from common import BASE_CURRENCIES, COLORS
+from common import CURRENCY_SYMBOLS, COLORS
 from data_manage import (
-    get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data, 
+    get_assets, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data,
     save_exchange_rates, get_from_cache_database
 )
 
 
+DF_CRYPTO_ASSETS = get_assets()
+CRYPTO_ASSET_NAMES = DF_CRYPTO_ASSETS.loc[:, 'id'].to_list()
+
+
 ##### Main crypto graph section #####
-CRYPTO_CURRENCIES = get_names()
-default_start_time = datetime.datetime(2015, 1, 1)
-default_end_time = datetime.datetime.now()
-df_main_graph = get_price_data(
-    default_start_time,
-    default_end_time,
-    CRYPTO_CURRENCIES
+DF_MAIN_GRAPH = get_price_data(
+    start=dt.datetime(2015, 1, 1),
+    end=dt.datetime.now(),
+    currencies=CRYPTO_ASSET_NAMES
 )
 
 
@@ -37,12 +35,8 @@ df_main_graph = get_price_data(
     ]
 )
 def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_date):
-    sent_start_time = parser.isoparse(start_date)
-    sent_end_time = parser.isoparse(end_date)
-    start_time_difference = sent_start_time - default_start_time
-    start_time_difference = start_time_difference.days
-    end_time_difference = sent_end_time - default_start_time
-    end_time_difference = end_time_difference.days
+    start_time = parser.isoparse(start_date)
+    end_time = parser.isoparse(end_date)
     try:
         currency_rates = CurrencyRates()
         usd_rate = currency_rates.get_rate('USD', base_currency)
@@ -51,11 +45,14 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
             base_currency
         )
         usd_rate = 1/usd_price
-    df = df_main_graph.copy(deep=True)
-    df = df[start_time_difference:end_time_difference]
-    for currency in CRYPTO_CURRENCIES:
-        df[currency] = df[currency].multiply(usd_rate)
-    # df = pd.read_csv('saved_data/crypto-usd.csv')
+    df = (
+        DF_MAIN_GRAPH
+        .loc[lambda x: x['timestamp'].between(start_time, end_time)]
+        .set_index('timestamp')
+        .multiply(usd_rate)
+        .reset_index()
+        .rename(columns={'timestamp': 'date'})
+    )
     fig = px.line(
         df,
         x='date',
@@ -73,9 +70,6 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
     return fig
 
 
-alert_message = True
-
-
 @app.callback(
     [
         Output('LED-display-usd', 'value'),
@@ -89,7 +83,7 @@ alert_message = True
     ],
     [Input('base-currency', 'value')]
 )
-def get_exchange_rates(base_currency):
+def display_exchange_rates(base_currency):
     try:
         currency_rates = CurrencyRates()
         usd_price = round(currency_rates.get_rate(base_currency, 'USD'), 2)
@@ -122,7 +116,7 @@ def get_exchange_rates(base_currency):
     Output('table-header', 'children'),
     [Input('base-currency', 'value')]
 )
-def create_table_header(base_currency):
+def display_ranking_table_header(base_currency):
     return f'Ranking of 10 ten most popular cryptocurrencies in {base_currency}:'
 
 
@@ -133,7 +127,7 @@ def create_table_header(base_currency):
     ],
     [Input('base-currency', 'value')]
 )
-def create_ranking_table(base_currency):
+def display_ranking_table_body(base_currency):
     try:
         currency_rates = CurrencyRates()
         usd_rate = currency_rates.get_rate('USD', base_currency)
@@ -142,94 +136,54 @@ def create_ranking_table(base_currency):
             base_currency
         )
         usd_rate = 1/usd_price
-    coincapapi_url = 'http://api.coincap.io/v2/assets?limit=10'
-    base_currency = BASE_CURRENCIES[base_currency]
-    response = requests.request("GET", coincapapi_url)
-    json_data = json.loads(response.text.encode('utf8'))
-    assets = json_data["data"]
-    df_assets = pd.DataFrame(assets)
-    crypto_symbols = list(df_assets['symbol'])
-    crypto_names = list(df_assets['id'])
-    crypto_url_logo_names = []
-    for index in range(len(crypto_names)):
-        crypto_url_logo_names.append(
-            crypto_names[index] +
-            "-" +
-            crypto_symbols[index].lower()
+    curr_symbol = CURRENCY_SYMBOLS[base_currency]
+    df_cleaned = (
+        DF_CRYPTO_ASSETS
+        .assign(
+            priceUsd=lambda x: x['priceUsd'] * usd_rate,
+            marketCapUsd=lambda x: x['marketCapUsd'] * usd_rate,
+            Logo=lambda x: (
+                '[![Coin](https://cryptologos.cc/logos/' +
+                x["id"] + "-" + x["symbol"].str.lower() +
+                '-logo.svg?v=023#thumbnail)](https://cryptologos.cc/)'
+            ),
         )
-    markdown_urls = []
-    for logo_name in crypto_url_logo_names:
-        markdown_urls.append(
-            f"[![Coin](https://cryptologos.cc/logos/{logo_name}-logo.svg?v=023#thumbnail)]" +
-            "(https://cryptologos.cc/)"
-        )
-    try:
-        df = pd.DataFrame({
-            "Pos": [pos+1 for pos in range(len(crypto_names))],
-            "Logo": [url for url in markdown_urls],
-            "Crypto Name": [crypto_name for crypto_name in list(df_assets['name'])],
-            "Symbol": [symbol for symbol in crypto_symbols],
-            f"Price[{base_currency}]": [
-                round((float(price)*usd_rate), 4)
-                for price in list(df_assets['priceUsd'])
-            ],
-            "Supply": [
-                round(float(supply), 2)
-                for supply in list(df_assets['supply'])
-            ],
-            f"MarketCap[{base_currency}]": [
-                round((float(market_cap)*usd_rate), 2)
-                for market_cap in list(df_assets['marketCapUsd'])
-            ],
-            "Change24h[%]": [
-                round(float(change), 2)
-                for change in list(df_assets['changePercent24Hr'])
-            ],
+        .round({
+            'priceUsd': 4,
+            'supply': 2,
+            'marketCapUsd': 2,
+            'changePercent24Hr': 2,
         })
-    except:
-        df = pd.DataFrame({
-            "Pos": [pos+1 for pos in range(len(crypto_names))],
-            "Logo": [url for url in markdown_urls],
-            "Crypto Name": [
-                crypto_name
-                for crypto_name in list(df_assets['name'])
-            ],
-            "Symbol": [symbol for symbol in crypto_symbols],
-            f"Price[{base_currency}]": [
-                round((float(price)*usd_rate), 4)
-                for price in list(df_assets['priceUsd'])
-            ],
-            "Supply": [
-                round(float(supply), 2)
-                for supply in list(df_assets['supply'])
-            ],
-            f"MarketCap[{base_currency}]": [
-                round((float(market_cap)*usd_rate), 2)
-                for market_cap in list(df_assets['marketCapUsd'])
-            ],
-            "Change24h[%]": [
-                change
-                for change in list(df_assets['changePercent24Hr'])
-            ],
+        .rename(columns={
+            'rank': 'Pos',
+            'name': 'Crypto Name',
+            'symbol': 'Symbol',
+            'priceUsd': f'Price[{curr_symbol}]',
+            'marketCapUsd': f'MarketCap[{curr_symbol}]',
+            'supply': 'Supply',
+            'changePercent24Hr': "Change24h[%]",
         })
-    data = df.to_dict("records")
-    columns = [
-        {"id": "Pos", "name": "Pos"},
-        {"id": "Logo", "name": "Logo", "presentation": "markdown"},
-        {"id": "Crypto Name", "name": "Crypto Name"},
-        {"id": "Symbol", "name": "Symbol"},
-        {
-            "id": f"Price[{base_currency}]",
-            "name": f"Price[{base_currency}]"
-        },
-        {"id": "Supply", "name": "Supply"},
-        {
-            "id": f"MarketCap[{base_currency}]",
-            "name": f"MarketCap[{base_currency}]"
-        },
-        {"id": "Change24h[%]", "name": "Change24h[%]"},
-    ]
-    return columns, data
+        .reindex(columns=[
+            'Pos', 'Logo', 'Crypto Name', 'Symbol',
+            f'Price[{curr_symbol}]', 'Supply',
+            f'MarketCap[{curr_symbol}]', 'Change24h[%]'
+        ])
+    )
+    data = df_cleaned.to_dict('records')
+    columns = []
+    for col_name in df_cleaned.columns.to_list():
+        if col_name == 'Logo':
+            columns.append({
+                'id': col_name, 
+                'name': col_name,
+                'presentation': 'markdown',
+            })
+        else:
+            columns.append({
+                'id': col_name, 
+                'name': col_name,
+            })
+    return (columns, data)
 
 
 ##### Fear and greed index section #####

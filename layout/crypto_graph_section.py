@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from dash import html, dcc
 
-from common import BASE_CURRENCIES, TODAY_DATE
-from callbacks import CRYPTO_CURRENCIES
+from common import CURRENCY_SYMBOLS, TODAY
+from callbacks import CRYPTO_ASSET_NAMES
 
 
 main_crypto_title = (
@@ -20,7 +20,7 @@ crypto_and_date_section = (
                     html.Label('Select base currency: '),
                     dcc.Dropdown(
                         id='base-currency',
-                        options=list(BASE_CURRENCIES.keys()),
+                        options=list(CURRENCY_SYMBOLS.keys()),
                         value='USD'
                     ),
                 ],
@@ -31,7 +31,7 @@ crypto_and_date_section = (
                     html.Label('Select crypto: '),
                     dcc.Dropdown(
                         id='crypto-dropdown',
-                        options=CRYPTO_CURRENCIES,
+                        options=CRYPTO_ASSET_NAMES,
                         value='bitcoin',
                         multi=True
                     ),
@@ -63,9 +63,9 @@ crypto_and_date_section = (
                         dcc.DatePickerSingle(
                             id='end-date-picker',
                             min_date_allowed=datetime(2015, 1, 1),
-                            max_date_allowed=TODAY_DATE,
-                            date=TODAY_DATE,
-                            initial_visible_month=TODAY_DATE,
+                            max_date_allowed=TODAY,
+                            date=TODAY,
+                            initial_visible_month=TODAY,
                         ),
                     ),
                 ],

@@ -2,7 +2,7 @@ import dash_daq as daq
 import dash_bootstrap_components as dbc
 from dash import html, dash_table
 
-from common import COLORS, BASE_CURRENCIES
+from common import COLORS, CURRENCY_SYMBOLS
 
 
 warning_message = (
@@ -25,7 +25,7 @@ crypto_amount = (
                 children=[
                     daq.LEDDisplay(
                         id='LED-display-usd',
-                        label=f"USD [{BASE_CURRENCIES['USD']}]",
+                        label=f"USD [{CURRENCY_SYMBOLS['USD']}]",
                         backgroundColor='#111111'
                     ),
                 ],
@@ -35,7 +35,7 @@ crypto_amount = (
                 children=[
                     daq.LEDDisplay(
                         id='LED-display-pln',
-                        label=f"PLN [{BASE_CURRENCIES['PLN']}]",
+                        label=f"PLN [{CURRENCY_SYMBOLS['PLN']}]",
                         backgroundColor='#111111'
                     ),
                 ],
@@ -45,7 +45,7 @@ crypto_amount = (
                 children=[
                     daq.LEDDisplay(
                         id='LED-display-eur',
-                        label=f"EUR [{BASE_CURRENCIES['EUR']}]",
+                        label=f"EUR [{CURRENCY_SYMBOLS['EUR']}]",
                         backgroundColor='#111111'
                     ),
                 ],
@@ -55,7 +55,7 @@ crypto_amount = (
                 children=[
                     daq.LEDDisplay(
                         id='LED-display-gpb',
-                        label=f"GBP [{BASE_CURRENCIES['GBP']}]",
+                        label=f"GBP [{CURRENCY_SYMBOLS['GBP']}]",
                         backgroundColor='#111111'
                     ),
                 ],
@@ -65,7 +65,7 @@ crypto_amount = (
                 children=[
                     daq.LEDDisplay(
                         id='LED-display-chf',
-                        label=f"CHF [{BASE_CURRENCIES['CHF']}]",
+                        label=f"CHF [{CURRENCY_SYMBOLS['CHF']}]",
                         backgroundColor='#111111'
                     ),
                 ],
