@@ -42,15 +42,32 @@ class ExchangeRates(base):
 base.metadata.create_all(engine)
 
 
-def get_names():
+def get_assets():
     url = 'http://api.coincap.io/v2/assets?limit=10'
     try:
         response = requests.get(url)
-        json_data = json.loads(response.text.encode('utf8'))
-        crypto_names = pd.DataFrame(json_data["data"]).loc[:, 'id'].to_list()
+        response_data = response.json()['data']
     except:
-        crypto_names = []
-    return crypto_names
+        response_data = {
+            'id': [], 'rank': [], 'symbol': [], 'name': [], 'supply': [],
+            'maxSupply': [], 'marketCapUsd': [], 'volumeUsd24Hr': [], 'priceUsd': [],
+            'changePercent24Hr': [], 'vwap24Hr': [], 'explorer': [],
+        }
+    df = (
+        pd
+        .DataFrame(response_data)
+        .astype({
+            'rank': 'int64',
+            'supply': 'float64',
+            'maxSupply': 'float64',
+            'marketCapUsd': 'float64',
+            'volumeUsd24Hr': 'float64',
+            'priceUsd': 'float64',
+            'changePercent24Hr': 'float64',
+            'vwap24Hr': 'float64',
+        })
+    )
+    return df
 
 
 def get_price_data(start_time, end_time, currencies):

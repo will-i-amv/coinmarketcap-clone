@@ -11,13 +11,14 @@ from forex_python.converter import CurrencyRates
 from app import app
 from common import CURRENCY_SYMBOLS, COLORS
 from data_manage import (
-    get_names, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data,
+    get_assets, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data,
     save_exchange_rates, get_from_cache_database
 )
 
 
 ##### Main crypto graph section #####
-CRYPTO_CURRENCIES = get_names()
+crypto_assets = get_assets()
+CRYPTO_CURRENCIES = crypto_assets.loc[:, 'id'].to_list()
 default_start_time = datetime.datetime(2015, 1, 1)
 default_end_time = datetime.datetime.now()
 df_main_graph = get_price_data(
