@@ -163,25 +163,6 @@ def get_rsi_data():
     return df
 
 
-def prepare_btc_price_for_ma_indicator(df_ma50):
-    start_time = float(df_ma50["timestamp"].min())
-    end_time = float(df_ma50["timestamp"].max())
-    url_price_btc = (
-        f"http://api.coincap.io/v2/assets/bitcoin/history" +
-        f"?interval=h1&start={start_time}&end={end_time}"
-    )
-    try:
-        response = requests.request("GET", url_price_btc)
-        json_data = json.loads(response.text.encode('utf8'))
-        data = json_data["data"]
-        df_btc_price = pd.DataFrame(data)
-        df_btc_price = df_btc_price.rename(columns={"time": "timestamp"})
-        df_btc_price['priceUsd'] = df_btc_price['priceUsd'].astype(float)
-    except:
-        df_btc_price = pd.DataFrame()
-    return df_btc_price
-
-
 def get_ma_data(window):
     base_url = lambda x: (
         f'https://api.polygon.io/v1/indicators/{x}/X:BTCUSD?' + 
@@ -193,12 +174,23 @@ def get_ma_data(window):
     try:
         sma_response = requests.get(sma_url)
         ema_response = requests.get(ema_url)
-        sma_json_data = json.loads(sma_response.text.encode('utf8'))
-        ema_json_data = json.loads(ema_response.text.encode('utf8'))
-        df_sma = pd.DataFrame(sma_json_data["results"]["values"])
-        df_ema = pd.DataFrame(ema_json_data["results"]["values"])
-        df_sma_ema = pd.merge(df_sma, df_ema, on='timestamp', how='left')
-        df_btc_price = prepare_btc_price_for_ma_indicator(df_sma_ema)
+        sma_json_data = sma_response.json()["results"]["values"]
+        ema_json_data = ema_response.json()["results"]["values"]
+        df_sma_ema = (
+            pd
+            .merge(
+                pd.DataFrame(sma_json_data), 
+                pd.DataFrame(ema_json_data), 
+                on='timestamp', 
+                how='left'
+            )
+            .astype({'timestamp': 'datetime64[ms]'})
+            .sort_values(by=['timestamp'])
+        )        
+        
+        start = df_sma_ema["timestamp"].min()
+        end = df_sma_ema["timestamp"].max()
+        df_btc_price = get_asset_history(start, end, currency='bitcoin', interval='h1')
         df = (
             df_sma_ema
             .merge(df_btc_price, on='timestamp', how='left')
