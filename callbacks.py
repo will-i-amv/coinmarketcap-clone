@@ -188,17 +188,17 @@ def display_ranking_table_body(base_currency):
     )
     data = df_cleaned.to_dict('records')
     columns = []
-    for item in df_cleaned.columns.to_list():
-        if item == 'Logo':
+    for col_name in df_cleaned.columns.to_list():
+        if col_name == 'Logo':
             columns.append({
-                'id': item, 
-                'name': item,
+                'id': col_name, 
+                'name': col_name,
                 'presentation': 'markdown',
             })
         else:
             columns.append({
-                'id': item, 
-                'name': item,
+                'id': col_name, 
+                'name': col_name,
             })
     return (columns, data)
 
