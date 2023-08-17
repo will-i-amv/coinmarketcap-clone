@@ -92,10 +92,10 @@ def get_asset_history(start, end, currency, interval='d1'):
     return df_cleaned
 
 
-def get_price_data(start_time, end_time, currencies):
+def get_price_data(start, end, currencies):
     list_of_dfs = []
     for currency in currencies:
-        df = get_asset_history(start_time, end_time, currency)
+        df = get_asset_history(start, end, currency)
         df_cleaned = df.rename(columns={'priceUsd': f'{currency}'})
         list_of_dfs.append(df_cleaned)
     df_main_graph = (

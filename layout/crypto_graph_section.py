@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from dash import html, dcc
 
 from common import CURRENCY_SYMBOLS, TODAY
-from callbacks import CRYPTO_CURRENCIES
+from callbacks import CRYPTO_ASSET_NAMES
 
 
 main_crypto_title = (
@@ -31,7 +31,7 @@ crypto_and_date_section = (
                     html.Label('Select crypto: '),
                     dcc.Dropdown(
                         id='crypto-dropdown',
-                        options=CRYPTO_CURRENCIES,
+                        options=CRYPTO_ASSET_NAMES,
                         value='bitcoin',
                         multi=True
                     ),

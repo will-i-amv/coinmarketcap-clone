@@ -13,15 +13,15 @@ from data_manage import (
 )
 
 
+DF_CRYPTO_ASSETS = get_assets()
+CRYPTO_ASSET_NAMES = DF_CRYPTO_ASSETS.loc[:, 'id'].to_list()
+
+
 ##### Main crypto graph section #####
-crypto_assets = get_assets()
-CRYPTO_CURRENCIES = crypto_assets.loc[:, 'id'].to_list()
-default_start_time = dt.datetime(2015, 1, 1)
-default_end_time = dt.datetime.now()
-df_main_graph = get_price_data(
-    default_start_time,
-    default_end_time,
-    CRYPTO_CURRENCIES
+DF_MAIN_GRAPH = get_price_data(
+    start=dt.datetime(2015, 1, 1),
+    end=dt.datetime.now(),
+    currencies=CRYPTO_ASSET_NAMES
 )
 
 
@@ -46,7 +46,7 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
         )
         usd_rate = 1/usd_price
     df = (
-        df_main_graph
+        DF_MAIN_GRAPH
         .loc[lambda x: x['timestamp'].between(start_time, end_time)]
         .set_index('timestamp')
         .multiply(usd_rate)
@@ -138,7 +138,7 @@ def display_ranking_table_body(base_currency):
         usd_rate = 1/usd_price
     curr_symbol = CURRENCY_SYMBOLS[base_currency]
     df_cleaned = (
-        crypto_assets
+        DF_CRYPTO_ASSETS
         .assign(
             priceUsd=lambda x: x['priceUsd'] * usd_rate,
             marketCapUsd=lambda x: x['marketCapUsd'] * usd_rate,
