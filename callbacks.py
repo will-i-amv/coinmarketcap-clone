@@ -7,10 +7,11 @@ from forex_python.converter import CurrencyRates
 
 from app import app
 from common import CURRENCY_SYMBOLS, COLORS
-from data_manage import (
-    get_assets, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data,
-    save_exchange_rates, get_from_cache_database
+from data_sources import (
+    get_assets, get_price_data, get_fear_greed_data, 
+    get_rsi_data, get_ma_data,
 )
+from models import save_exchange_rates, get_from_cache_database
 
 
 DF_CRYPTO_ASSETS = get_assets()
