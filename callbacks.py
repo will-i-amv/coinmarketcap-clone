@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import json
 from dateutil import parser
 
@@ -19,8 +19,8 @@ from data_manage import (
 ##### Main crypto graph section #####
 crypto_assets = get_assets()
 CRYPTO_CURRENCIES = crypto_assets.loc[:, 'id'].to_list()
-default_start_time = datetime.datetime(2015, 1, 1)
-default_end_time = datetime.datetime.now()
+default_start_time = dt.datetime(2015, 1, 1)
+default_end_time = dt.datetime.now()
 df_main_graph = get_price_data(
     default_start_time,
     default_end_time,

@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import functools as ft
 import json
 import os
@@ -215,13 +215,13 @@ def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):
     existing_record = (
         session
         .query(ExchangeRates)
-        .filter(ExchangeRates.date == str(datetime.date.today()))
+        .filter(ExchangeRates.date == str(dt.date.today()))
         .first()
     )
     if not existing_record:
         data_record = ExchangeRates(
             id=None,
-            date=datetime.date.today(),
+            date=dt.date.today(),
             USD=usd_price,
             PLN=pln_price,
             EUR=eur_price,
