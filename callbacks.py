@@ -73,9 +73,6 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
     return fig
 
 
-alert_message = True
-
-
 @app.callback(
     [
         Output('LED-display-usd', 'value'),
