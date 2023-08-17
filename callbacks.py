@@ -50,10 +50,11 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
         usd_rate = 1/usd_price
     df = (
         df_main_graph
-        .loc[lambda x: x['date'].between(start_time, end_time)]
-        .set_index('date')
+        .loc[lambda x: x['timestamp'].between(start_time, end_time)]
+        .set_index('timestamp')
         .multiply(usd_rate)
         .reset_index()
+        .rename(columns={'timestamp': 'date'})
     )
     fig = px.line(
         df,

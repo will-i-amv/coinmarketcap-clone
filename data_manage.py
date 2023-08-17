@@ -70,39 +70,42 @@ def get_assets():
     return df
 
 
-def get_price_data(start_time, end_time, currencies):
-    unix_start_time = time.mktime(start_time.timetuple()) * 1000
-    unix_end_time = time.mktime(end_time.timetuple()) * 1000
+def get_asset_history(start, end, currency, interval='d1'):
+    unix_start = start.replace(tzinfo=dt.timezone.utc).timestamp() * 1000 # In miliseconds
+    unix_end = end.replace(tzinfo=dt.timezone.utc).timestamp() * 1000 # In miliseconds
+    url = (
+        f"http://api.coincap.io/v2/assets/{currency}/history?" + 
+        f"interval={interval}&start={unix_start}&end={unix_end}"
+    )
     try:
-        list_of_dfs = []
-        for currency in currencies:
-            url = (
-                f"http://api.coincap.io/v2/assets/{currency}/history?interval=d1" +
-                f"&start={unix_start_time}&end={unix_end_time}"
-            )
-            response = requests.get(url).text.encode('utf8')
-            df = pd.DataFrame(json.loads(response)["data"])
-            df_cleaned = (
-                df
-                .assign(date=lambda x: x['date'].str.replace('T00:00:00.000Z', ''))
-                .astype({'priceUsd': 'float64', 'date': 'datetime64[ms]'})
-                .rename(columns={'priceUsd': f'{currency}'})
-                .drop(labels=['time'], axis=1)
-            )
-            list_of_dfs.append(df_cleaned)
-        df_main_graph = (
-            ft.reduce(
-                lambda x, y: pd.merge(x, y, on=['date'], how='outer'),
-                list_of_dfs
-            )
-            .fillna(0)
-            .sort_values(by=['date'])
-        )
+        response = requests.get(url)
+        response_data = response.json()['data']
     except:
-        df_main_graph = pd.DataFrame({
-            label: []
-            for label in ['date'] + currencies
-        })
+        response_data = {'priceUsd': [], 'time': []}
+    df_cleaned = (
+        pd
+        .DataFrame(response_data)
+        .loc[:, ['priceUsd', 'time']]
+        .astype({'priceUsd': 'float64', 'time': 'datetime64[ms]'})
+        .rename(columns={'time': 'timestamp'})
+    )
+    return df_cleaned
+
+
+def get_price_data(start_time, end_time, currencies):
+    list_of_dfs = []
+    for currency in currencies:
+        df = get_asset_history(start_time, end_time, currency)
+        df_cleaned = df.rename(columns={'priceUsd': f'{currency}'})
+        list_of_dfs.append(df_cleaned)
+    df_main_graph = (
+        ft.reduce(
+            lambda x, y: pd.merge(x, y, on=['timestamp'], how='outer'),
+            list_of_dfs
+        )
+        .fillna(0)
+        .sort_values(by=['timestamp'])
+    )
     return df_main_graph
 
 
