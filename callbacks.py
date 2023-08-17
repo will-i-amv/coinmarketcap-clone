@@ -142,20 +142,9 @@ def display_ranking_table_body(base_currency):
             base_currency
         )
         usd_rate = 1/usd_price
-    url = 'http://api.coincap.io/v2/assets?limit=10'
     curr_symbol = CURRENCY_SYMBOLS[base_currency]
-    response = requests.get(url)
-    json_data = json.loads(response.text.encode('utf8'))
-    df = pd.DataFrame(json_data["data"])
     df_cleaned = (
-        df
-        .astype({
-            'rank': 'int64',
-            'priceUsd': 'float64',
-            'supply': 'float64',
-            'marketCapUsd': 'float64',
-            'changePercent24Hr': 'float64',
-        })
+        crypto_assets
         .assign(
             priceUsd=lambda x: x['priceUsd'] * usd_rate,
             marketCapUsd=lambda x: x['marketCapUsd'] * usd_rate,
