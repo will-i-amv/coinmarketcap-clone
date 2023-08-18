@@ -1,6 +1,6 @@
 import datetime as dt
 
-from sqlalchemy import create_engine, Column, String, Integer, Float
+from sqlalchemy import create_engine, Column, Date, String, Integer, Float
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
@@ -12,8 +12,7 @@ session = db_session()
 
 class ExchangeRates(base):
     __tablename__ = "exchange_rates"
-
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     date = Column(String)
     USD = Column(Float)
     PLN = Column(Float)
@@ -21,8 +20,7 @@ class ExchangeRates(base):
     GBP = Column(Float)
     CHF = Column(Float)
 
-    def __init__(self, id, date, USD, PLN, EUR, GBP, CHF):
-        self.id = id
+    def __init__(self, date, USD, PLN, EUR, GBP, CHF):
         self.date = date
         self.USD = USD
         self.PLN = PLN
@@ -43,7 +41,6 @@ def save_exchange_rates(usd_price, pln_price, eur_price, gbp_price, chf_price):
     )
     if not existing_record:
         data_record = ExchangeRates(
-            id=None,
             date=dt.date.today(),
             USD=usd_price,
             PLN=pln_price,
@@ -65,7 +62,6 @@ def check_cache_database():
     existing_records = session.query(ExchangeRates).all()
     if not existing_records:
         data_record = ExchangeRates(
-            id=None,
             date=date,
             USD=usd_price,
             PLN=pln_price,
