@@ -1,6 +1,5 @@
 import datetime as dt
 import functools as ft
-import json
 import os
 
 import pandas as pd
@@ -77,7 +76,7 @@ def get_fear_greed_data():
         .loc[:, ['value', 'value_classification', 'timestamp']]
         .astype({'value': 'int64', 'timestamp': 'datetime64[ms]'})
         .sort_values(by=['timestamp'], ascending=False)
-        .reset_index(drop=True)   
+        .reset_index(drop=True)
     )
     return df_clean
 
@@ -101,46 +100,18 @@ def get_rsi_data():
     return df
 
 
-def get_ma_data(window):
-    base_url = lambda x: (
-        f'https://api.polygon.io/v1/indicators/{x}/X:BTCUSD?' + 
-        f'timespan=hour&window={window}&series_type=close&order=desc&limit=700' + 
+def get_ma_data(window, ma_type):
+    url = (
+        f'https://api.polygon.io/v1/indicators/{ma_type}/X:BTCUSD?' +
+        f'timespan=hour&window={window}&series_type=close&order=desc&limit=700' +
         f'&apiKey={POLYGON_API_KEY}'
     )
-    sma_url = base_url('sma')
-    ema_url = base_url('ema')
     try:
-        sma_response = requests.get(sma_url)
-        ema_response = requests.get(ema_url)
-        sma_json_data = sma_response.json()["results"]["values"]
-        ema_json_data = ema_response.json()["results"]["values"]
-        df_sma_ema = (
-            pd
-            .merge(
-                pd.DataFrame(sma_json_data), 
-                pd.DataFrame(ema_json_data), 
-                on='timestamp', 
-                how='left'
-            )
-            .astype({'timestamp': 'datetime64[ms]'})
-            .sort_values(by=['timestamp'])
-        )        
-        
-        start = df_sma_ema["timestamp"].min()
-        end = df_sma_ema["timestamp"].max()
-        df_btc_price = get_asset_history(start, end, currency='bitcoin', interval='h1')
-        df = (
-            df_sma_ema
-            .merge(df_btc_price, on='timestamp', how='left')
-            .astype({'timestamp': 'datetime64[ms]'})
-            .rename(columns={
-                'value_x': 'SMA',
-                'value_y': 'EMA',
-                'priceUsd': 'BTC price'
-            })
-        )
+        response = requests.get(url)
+        response_data = response.json()["results"]["values"]
     except:
-        df = pd.DataFrame()
+        response_data = {'timestamp': [], 'value': []}
+    df = pd.DataFrame(response_data).astype({'timestamp': 'datetime64[ms]'})
     return df
 
 
@@ -159,3 +130,32 @@ def clean_price_data(start, end, currencies):
         .sort_values(by=['timestamp'])
     )
     return df_main_graph
+
+
+def clean_ma_data(ma_windows, ma_types):
+    dfs_by_window = {}
+    for ma_window in ma_windows:
+        dfs_by_type = {}
+        for ma_type in ma_types:
+            dfs_by_type[ma_type] = get_ma_data(ma_window, ma_type)
+        dfs_by_window[ma_window] = (
+            pd
+            .merge(dfs_by_type['sma'], dfs_by_type['ema'], on='timestamp', how='left')
+            .rename(columns={'value_x': 'SMA', 'value_y': 'EMA'})
+            .sort_values(by=['timestamp'])
+        )
+    df_ma50 = dfs_by_window['50']
+    df_btc_price = get_asset_history(
+        start=df_ma50["timestamp"].min(),
+        end=df_ma50["timestamp"].max(),
+        currency='bitcoin',
+        interval='h1'
+    )
+    dfs_by_window_cleaned = {}
+    for ma_window in ma_windows:
+        dfs_by_window_cleaned[ma_window] = (
+            dfs_by_window[ma_window]
+            .merge(df_btc_price, on='timestamp', how='left')
+            .rename(columns={'priceUsd': 'BTC price'})
+        )
+    return (dfs_by_window_cleaned['50'], dfs_by_window_cleaned['180'])

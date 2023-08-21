@@ -9,7 +9,7 @@ from app import app
 from constants import CURRENCY_SYMBOLS, COLORS
 from data_sources import (
     get_assets, clean_price_data, get_fear_greed_data, 
-    get_rsi_data, get_ma_data,
+    get_rsi_data, clean_ma_data,
 )
 from models import save_exchange_rates, get_from_cache_database
 
@@ -280,8 +280,10 @@ def rsi_toggle_collapse(n, is_open):
 
 
 ###### MA-50 and Ma-200 indicator section #######
-df_ma50 = get_ma_data(window='50')
-df_ma200 = get_ma_data(window='180')
+df_ma50, df_ma200 = clean_ma_data(
+    ma_windows=['50', '180'], 
+    ma_types=['sma', 'ema']
+)
 
 
 @app.callback(
