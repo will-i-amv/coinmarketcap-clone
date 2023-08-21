@@ -90,14 +90,14 @@ def get_rsi_data():
     )
     try:
         response = requests.get(url)
-        json_data = json.loads(response.text.encode('utf8'))
-        df = (
-            pd
-            .DataFrame(json_data["results"]["values"])
-            .astype({'timestamp': 'datetime64[ms]'})
-        )
+        response_data = response.json()["results"]["values"]
     except:
-        df = pd.DataFrame({'timestamp': [], 'value': []})
+        response_data = {'timestamp': [], 'value': []}
+    df = (
+        pd
+        .DataFrame(response_data)
+        .astype({'timestamp': 'datetime64[ms]'})
+    )
     return df
 
 
