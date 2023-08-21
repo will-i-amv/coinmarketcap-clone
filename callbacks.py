@@ -6,7 +6,7 @@ from dash import Input, Output, State
 from forex_python.converter import CurrencyRates
 
 from app import app
-from common import CURRENCY_SYMBOLS, COLORS
+from constants import CURRENCY_SYMBOLS, COLORS
 from data_sources import (
     get_assets, get_price_data, get_fear_greed_data, 
     get_rsi_data, get_ma_data,

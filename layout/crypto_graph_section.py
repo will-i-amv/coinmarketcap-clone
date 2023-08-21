@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from dash import html, dcc
 
-from common import CURRENCY_SYMBOLS, TODAY
+from constants import CURRENCY_SYMBOLS, TODAY
 from callbacks import CRYPTO_ASSET_NAMES
 
 

@@ -2,7 +2,7 @@ import dash_daq as daq
 import dash_bootstrap_components as dbc
 from dash import html, dash_table
 
-from common import COLORS, CURRENCY_SYMBOLS
+from constants import COLORS, CURRENCY_SYMBOLS
 
 
 warning_message = (
