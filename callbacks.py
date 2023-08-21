@@ -188,7 +188,7 @@ def display_ranking_table_body(base_currency):
 
 
 ##### Fear and greed index section #####
-df_fng, df_short_fng = get_fear_greed_data()
+df_fng = get_fear_greed_data()
 
 
 @app.callback(
@@ -226,7 +226,7 @@ def display_fng_series(time_range):
     )
     fig.layout.plot_bgcolor = COLORS['background']
     fig.layout.paper_bgcolor = COLORS['background']
-    fig.update_xaxes(showgrid=False, zeroline=False, autorange="reversed")
+    fig.update_xaxes(showgrid=False, zeroline=False)
     fig.update_yaxes(showgrid=False, zeroline=False)
     return fig
 

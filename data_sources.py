@@ -64,35 +64,22 @@ def get_fear_greed_data():
     url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
     try:
         response = requests.get(url)
-        json_data = json.loads(response.text.encode('utf8'))
-        df = pd.DataFrame(json_data["data"])
-        df_clean = (
-            df
-            .loc[:, ['value', 'value_classification', 'timestamp']]
-            .astype({'value': 'int64'})
-        )
-        df_clean_sampled = (
-            df_clean
-            .loc[[0, 1, 6, 29, 364], :]
-            .assign(Time=[
-                "Now",
-                "Yesterday",
-                "Week ago",
-                "Month ago",
-                "Year ago"
-            ])
-            .rename(columns={'value': 'Value', 'value_classification': 'Label'})
-            .drop(labels=['timestamp'], axis=1)
-            .reset_index(drop=True)
-        )
+        response_data = response.json()['data']
     except:
-        df_clean = pd.DataFrame({
-            'value': [], 
-            'value_classification': [], 
-            'timestamp': []
-        })
-        df_clean_sampled = pd.DataFrame({'Value': [], 'Label': [], 'Time': []})
-    return (df_clean, df_clean_sampled)
+        response_data = {
+            'value': [],
+            'value_classification': [],
+            'timestamp': [],
+        }
+    df = pd.DataFrame(response_data)
+    df_clean = (
+        df
+        .loc[:, ['value', 'value_classification', 'timestamp']]
+        .astype({'value': 'int64', 'timestamp': 'datetime64[ms]'})
+        .sort_values(by=['timestamp'], ascending=False)
+        .reset_index(drop=True)   
+    )
+    return df_clean
 
 
 def get_rsi_data():

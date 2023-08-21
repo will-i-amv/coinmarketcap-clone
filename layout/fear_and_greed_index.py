@@ -1,10 +1,35 @@
+import datetime as dt
 import dash_daq as daq
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 
-from callbacks import df_short_fng
+from callbacks import df_fng
 
 
+def resample_df(df):
+    today = df['timestamp'].max()
+    selected_dates = [
+        today - dt.timedelta(days=day)
+        for day in [0, 1, 6, 29, 364]
+    ]
+    df_sampled = (
+        df
+        .loc[lambda x: x['timestamp'].isin(selected_dates)]
+        .assign(Time=[
+            "Now",
+            "Yesterday",
+            "Week ago",
+            "Month ago",
+            "Year ago"
+        ])
+        .rename(columns={'value': 'Value', 'value_classification': 'Label'})
+        .drop(labels=['timestamp'], axis=1)
+        .reset_index(drop=True)
+    )
+    return df_sampled
+
+
+df_short_fng = resample_df(df_fng)
 fng_index_table = (
     html.Section(
         children=[
