@@ -8,7 +8,7 @@ from forex_python.converter import CurrencyRates
 from app import app
 from constants import CURRENCY_SYMBOLS, COLORS
 from data_sources import (
-    get_assets, get_price_data, get_fear_greed_data, 
+    get_assets, clean_price_data, get_fear_greed_data, 
     get_rsi_data, get_ma_data,
 )
 from models import save_exchange_rates, get_from_cache_database
@@ -19,7 +19,7 @@ CRYPTO_ASSET_NAMES = DF_CRYPTO_ASSETS.loc[:, 'id'].to_list()
 
 
 ##### Main crypto graph section #####
-DF_MAIN_GRAPH = get_price_data(
+DF_MAIN_GRAPH = clean_price_data(
     start=dt.datetime(2015, 1, 1),
     end=dt.datetime.now(),
     currencies=CRYPTO_ASSET_NAMES

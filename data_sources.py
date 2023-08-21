@@ -60,23 +60,6 @@ def get_asset_history(start, end, currency, interval='d1'):
     return df_cleaned
 
 
-def get_price_data(start, end, currencies):
-    list_of_dfs = []
-    for currency in currencies:
-        df = get_asset_history(start, end, currency)
-        df_cleaned = df.rename(columns={'priceUsd': f'{currency}'})
-        list_of_dfs.append(df_cleaned)
-    df_main_graph = (
-        ft.reduce(
-            lambda x, y: pd.merge(x, y, on=['timestamp'], how='outer'),
-            list_of_dfs
-        )
-        .fillna(0)
-        .sort_values(by=['timestamp'])
-    )
-    return df_main_graph
-
-
 def get_fear_greed_data():
     url = 'https://api.alternative.me/fng/?limit=365&date_format=us'
     try:
@@ -174,3 +157,18 @@ def get_ma_data(window):
     return df
 
 
+def clean_price_data(start, end, currencies):
+    list_of_dfs = []
+    for currency in currencies:
+        df = get_asset_history(start, end, currency)
+        df_cleaned = df.rename(columns={'priceUsd': f'{currency}'})
+        list_of_dfs.append(df_cleaned)
+    df_main_graph = (
+        ft.reduce(
+            lambda x, y: pd.merge(x, y, on=['timestamp'], how='outer'),
+            list_of_dfs
+        )
+        .fillna(0)
+        .sort_values(by=['timestamp'])
+    )
+    return df_main_graph
