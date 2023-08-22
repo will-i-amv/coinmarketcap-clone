@@ -6,7 +6,7 @@ from constants import CURRENCY_SYMBOLS, TODAY
 from layout.tab_sections import ranking, fng, ma, rsi 
 
 
-def render_layout(asset_names, df_dng):
+def render_layout(asset_names, df_fng):
     title = (
         html.H1(
             children="Dash application for cryptocurrencies monitoring",
@@ -107,7 +107,7 @@ def render_layout(asset_names, df_dng):
                 dcc.Tab(
                     label='Fear and Greed Index',
                     children=[
-                        fng.render_fng_table(df_dng),
+                        fng.render_fng_table(df_fng),
                         fng.fng_selector_graph,
                         fng.fng_info_button
                     ],
