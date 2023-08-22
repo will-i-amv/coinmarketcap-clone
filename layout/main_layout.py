@@ -1,11 +1,90 @@
+import datetime as dt
+
 from dash import html, dcc
 
-from layout.crypto_graph_section import title, crypto_params_selector, crypto_graph
+from callbacks import CRYPTO_ASSET_NAMES
+from constants import CURRENCY_SYMBOLS, TODAY
 from layout.fear_and_greed_index import fng_gauge_table, fng_selector_graph, fng_info_button
 from layout.rsi_indicator import rsi_period_selector, rsi_graph, rsi_info_button
 from layout.current_prices_table import fiat_rates_led_display, crypto_prices_table, warning_alert
 from layout.moving_averages import ma_params_selector, ma_graph, ma_info_button
 
+
+title = (
+    html.H1(
+        children="Dash application for cryptocurrencies monitoring",
+        className="main-header"
+    )
+)
+crypto_params_selector = (
+    html.Section(
+        children=[
+            html.Div(
+                children=[
+                    html.Label('Select base currency: '),
+                    dcc.Dropdown(
+                        id='base-currency',
+                        options=list(CURRENCY_SYMBOLS.keys()),
+                        value='USD'
+                    ),
+                ],
+                className='select-data higher-width'
+            ),
+            html.Div(
+                children=[
+                    html.Label('Select crypto: '),
+                    dcc.Dropdown(
+                        id='crypto-dropdown',
+                        options=CRYPTO_ASSET_NAMES,
+                        value='bitcoin',
+                        multi=True
+                    ),
+                ],
+                className='select-data higher-width'
+            ),
+            html.Div(
+                children=[
+                    html.Label('Select start date: '),
+                    html.Div(
+                        dcc.DatePickerSingle(
+                            id='start-date-picker',
+                            min_date_allowed=dt.datetime(2015, 1, 1),
+                            max_date_allowed=(
+                                dt.datetime.today() -
+                                dt.timedelta(days=7)
+                            ),
+                            date=dt.datetime(2019, 1, 1),
+                            initial_visible_month=dt.datetime(2019, 1, 1)
+                        ),
+                    ),
+                ],
+                className='select-data small-width'
+            ),
+            html.Div(
+                children=[
+                    html.Label('Select end date: '),
+                    html.Div(
+                        dcc.DatePickerSingle(
+                            id='end-date-picker',
+                            min_date_allowed=dt.datetime(2015, 1, 1),
+                            max_date_allowed=TODAY,
+                            date=TODAY,
+                            initial_visible_month=TODAY,
+                        ),
+                    ),
+                ],
+                className='select-data small-width'
+            )
+        ],
+        className='main-options'
+    )
+)
+crypto_graph = (
+    html.Section(
+        dcc.Graph(id='crypto-graph'),
+        className='graph-container'
+    )
+)
 crypto_tabs = html.Div(
     [
         dcc.Tabs([
