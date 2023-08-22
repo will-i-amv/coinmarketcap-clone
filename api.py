@@ -3,9 +3,16 @@ import os
 
 import pandas as pd
 import requests
+from forex_python.converter import CurrencyRates
 
 
 POLYGON_API_KEY = os.environ.get('POLYGON_API_KEY')
+
+
+def get_exchange_rates():
+    rates = CurrencyRates().get_rates(base_cur='USD')
+    df = pd.DataFrame([rates]).assign(USD=1.0)
+    return df
 
 
 def get_assets():

@@ -3,6 +3,7 @@ import functools as ft
 import pandas as pd
 
 import api
+import models
 
 
 def clean_price_data(start, end, currencies):
@@ -49,3 +50,20 @@ def clean_ma_data(ma_windows, ma_types):
             .rename(columns={'priceUsd': 'BTC price'})
         )
     return (dfs_by_window_cleaned['50'], dfs_by_window_cleaned['180'])
+
+
+def clean_exchange_rates(date, currency_names):
+    try:
+        df = models.get_exchange_rates(date)
+        assert not df.empty
+    except AssertionError:
+        df = api.get_exchange_rates()
+        record = (
+            df
+            .loc[:, currency_names]
+            .assign(date=date)
+            .to_dict('records')[0]
+        )
+        models.save_exchange_rates(record)
+    rates = df.loc[:, currency_names].to_dict('records')[0]
+    return rates
