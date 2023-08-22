@@ -76,7 +76,6 @@ def get_fear_greed_data():
         .loc[:, ['value', 'value_classification', 'timestamp']]
         .astype({'value': 'int64', 'timestamp': 'datetime64[ms]'})
         .sort_values(by=['timestamp'], ascending=False)
-        .reset_index(drop=True)
     )
     return df_clean
 
