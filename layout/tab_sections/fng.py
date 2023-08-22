@@ -3,33 +3,9 @@ import dash_daq as daq
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 
-from callbacks import df_fng
+from callbacks import df_fng_sampled
 
 
-def resample_df(df):
-    today = df['timestamp'].max()
-    selected_dates = [
-        today - dt.timedelta(days=day)
-        for day in [0, 1, 6, 29, 364]
-    ]
-    df_sampled = (
-        df
-        .loc[lambda x: x['timestamp'].isin(selected_dates)]
-        .assign(Time=[
-            "Now",
-            "Yesterday",
-            "Week ago",
-            "Month ago",
-            "Year ago"
-        ])
-        .rename(columns={'value': 'Value', 'value_classification': 'Label'})
-        .drop(labels=['timestamp'], axis=1)
-        .reset_index(drop=True)
-    )
-    return df_sampled
-
-
-df_short_fng = resample_df(df_fng)
 fng_gauge_table = (
     html.Section(
         children=[
@@ -44,7 +20,7 @@ fng_gauge_table = (
                             "green":[66, 100]
                         }
                     },
-                    value=int(df_short_fng['Value'].loc[0]),
+                    value=int(df_fng_sampled['Value'].loc[0]),
                     showCurrentValue=True,
                     label='Fear and Greed Index ',
                     max=100,
@@ -54,10 +30,10 @@ fng_gauge_table = (
             ),
             html.Div(
                 dash_table.DataTable(
-                    data=df_short_fng.to_dict('records'),
+                    data=df_fng_sampled.to_dict('records'),
                     columns=[
                         {"name": i, "id": i}
-                        for i in df_short_fng.columns
+                        for i in df_fng_sampled.columns
                     ],
                     style_header={
                         'backgroundColor': 'rgb(30, 30, 30)',

@@ -7,7 +7,7 @@ from dash import Input, Output, State
 from api import get_assets, get_fear_greed_data, get_rsi_data
 from app import app
 from constants import CURRENCY_SYMBOLS, COLORS
-from utils import clean_price_data, clean_ma_data, clean_exchange_rates
+from utils import clean_price_data, clean_ma_data, clean_exchange_rates, resample_df_fng
 
 
 DF_CRYPTO_ASSETS = get_assets()
@@ -162,7 +162,7 @@ def display_ranking_table_body(base_currency):
 
 ##### Fear and greed index section #####
 df_fng = get_fear_greed_data()
-
+df_fng_sampled = resample_df_fng(df_fng)
 
 @app.callback(
     Output("fng-collapse", "is_open"),
