@@ -5,13 +5,11 @@ import plotly.express as px
 from dash import Input, Output, State
 from forex_python.converter import CurrencyRates
 
+from api import get_assets, get_fear_greed_data, get_rsi_data
 from app import app
 from constants import CURRENCY_SYMBOLS, COLORS
-from data_sources import (
-    get_assets, clean_price_data, get_fear_greed_data, 
-    get_rsi_data, clean_ma_data,
-)
 from models import save_exchange_rates, get_from_cache_database
+from utils import clean_price_data, clean_ma_data
 
 
 DF_CRYPTO_ASSETS = get_assets()
