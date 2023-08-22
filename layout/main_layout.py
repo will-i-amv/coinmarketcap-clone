@@ -4,10 +4,7 @@ from dash import html, dcc
 
 from callbacks import CRYPTO_ASSET_NAMES
 from constants import CURRENCY_SYMBOLS, TODAY
-from layout.fear_and_greed_index import fng_gauge_table, fng_selector_graph, fng_info_button
-from layout.rsi_indicator import rsi_period_selector, rsi_graph, rsi_info_button
-from layout.current_prices_table import fiat_rates_led_display, crypto_prices_table, warning_alert
-from layout.moving_averages import ma_params_selector, ma_graph, ma_info_button
+from layout.tab_sections import ranking, fng, ma, rsi 
 
 
 title = (
@@ -91,9 +88,9 @@ crypto_tabs = html.Div(
             dcc.Tab(
                 label='Ranking',
                 children=[
-                    fiat_rates_led_display,
-                    warning_alert,
-                    crypto_prices_table,
+                    ranking.fiat_rates_led_display,
+                    ranking.warning_alert,
+                    ranking.crypto_prices_table,
                 ],
                 style={
                     'backgroundColor': 'rgb(50, 50, 50)',
@@ -110,9 +107,9 @@ crypto_tabs = html.Div(
             dcc.Tab(
                 label='Fear and Greed Index',
                 children=[
-                    fng_gauge_table,
-                    fng_selector_graph,
-                    fng_info_button
+                    fng.fng_gauge_table,
+                    fng.fng_selector_graph,
+                    fng.fng_info_button
                 ],
                 style={
                     'backgroundColor': 'rgb(50, 50, 50)',
@@ -129,9 +126,9 @@ crypto_tabs = html.Div(
             dcc.Tab(
                 label='Relative Strength Index',
                 children=[
-                    rsi_period_selector,
-                    rsi_graph,
-                    rsi_info_button
+                    rsi.rsi_period_selector,
+                    rsi.rsi_graph,
+                    rsi.rsi_info_button
                 ],
                 style={
                     'backgroundColor': 'rgb(50, 50, 50)',
@@ -148,9 +145,9 @@ crypto_tabs = html.Div(
             dcc.Tab(
                 label='Moving Averages',
                 children=[
-                    ma_params_selector,
-                    ma_graph,
-                    ma_info_button
+                    ma.ma_params_selector,
+                    ma.ma_graph,
+                    ma.ma_info_button
                 ],
                 style={
                     'backgroundColor': 'rgb(50, 50, 50)',
