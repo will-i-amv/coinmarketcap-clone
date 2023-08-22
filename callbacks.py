@@ -3,22 +3,22 @@ from dateutil import parser
 
 import plotly.express as px
 from dash import Input, Output, State
-from forex_python.converter import CurrencyRates
 
+from api import get_assets, get_fear_greed_data, get_rsi_data
 from app import app
-from common import CURRENCY_SYMBOLS, COLORS
-from data_manage import (
-    get_assets, get_price_data, get_fear_greed_data, get_rsi_data, get_ma_data,
-    save_exchange_rates, get_from_cache_database
-)
+from constants import CURRENCY_SYMBOLS, COLORS
+from utils import clean_price_data, clean_ma_data, clean_exchange_rates
 
 
 DF_CRYPTO_ASSETS = get_assets()
 CRYPTO_ASSET_NAMES = DF_CRYPTO_ASSETS.loc[:, 'id'].to_list()
-
+FIAT_CURRENCY_RATES = clean_exchange_rates(
+    date=dt.date.today(), 
+    currency_names=['USD', 'EUR', 'GBP', 'PLN', 'CHF']
+)
 
 ##### Main crypto graph section #####
-DF_MAIN_GRAPH = get_price_data(
+DF_MAIN_GRAPH = clean_price_data(
     start=dt.datetime(2015, 1, 1),
     end=dt.datetime.now(),
     currencies=CRYPTO_ASSET_NAMES
@@ -37,19 +37,12 @@ DF_MAIN_GRAPH = get_price_data(
 def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_date):
     start_time = parser.isoparse(start_date)
     end_time = parser.isoparse(end_date)
-    try:
-        currency_rates = CurrencyRates()
-        usd_rate = currency_rates.get_rate('USD', base_currency)
-    except:
-        date, usd_price, pln_price, eur_price, gbp_price, chf_price = get_from_cache_database(
-            base_currency
-        )
-        usd_rate = 1/usd_price
+    fiat_curr_rate = FIAT_CURRENCY_RATES[base_currency]
     df = (
         DF_MAIN_GRAPH
         .loc[lambda x: x['timestamp'].between(start_time, end_time)]
         .set_index('timestamp')
-        .multiply(usd_rate)
+        .multiply(fiat_curr_rate)
         .reset_index()
         .rename(columns={'timestamp': 'date'})
     )
@@ -84,32 +77,20 @@ def display_main_crypto_series(crypto_dropdown, base_currency, start_date, end_d
     [Input('base-currency', 'value')]
 )
 def display_exchange_rates(base_currency):
-    try:
-        currency_rates = CurrencyRates()
-        usd_price = round(currency_rates.get_rate(base_currency, 'USD'), 2)
-        pln_price = round(currency_rates.get_rate(base_currency, 'PLN'), 2)
-        eur_price = round(currency_rates.get_rate(base_currency, 'EUR'), 2)
-        gbp_price = round(currency_rates.get_rate(base_currency, 'GBP'), 2)
-        chf_price = round(currency_rates.get_rate(base_currency, 'CHF'), 2)
-        if base_currency == "USD":
-            save_exchange_rates(
-                usd_price,
-                pln_price,
-                eur_price,
-                gbp_price,
-                chf_price
-            )
-        alert_message = "Everything ok"
-        color = "info"
-        is_open = False
-    except:
-        date, usd_price, pln_price, eur_price, gbp_price, chf_price = get_from_cache_database(
-            base_currency
-        )
-        alert_message = f"Warning! Currency rates are out of date! (retrieved of {date}). Be careful."
-        color = "primary"
-        is_open = True
-    return usd_price, pln_price, eur_price, gbp_price, chf_price, alert_message, color, is_open
+    fiat_curr_rate = FIAT_CURRENCY_RATES[base_currency]
+    updated_rates = {
+        label: round((value / fiat_curr_rate), 2) 
+        for label, value in FIAT_CURRENCY_RATES.items()
+    }
+    usd_rate = updated_rates['USD']
+    pln_rate = updated_rates['PLN']
+    eur_rate = updated_rates['EUR']
+    gbp_rate = updated_rates['GBP']
+    chf_rate = updated_rates['CHF']
+    alert_message = "Everything ok"
+    color = "info"
+    is_open = False
+    return usd_rate, pln_rate, eur_rate, gbp_rate, chf_rate, alert_message, color, is_open
 
 
 @app.callback(
@@ -128,20 +109,13 @@ def display_ranking_table_header(base_currency):
     [Input('base-currency', 'value')]
 )
 def display_ranking_table_body(base_currency):
-    try:
-        currency_rates = CurrencyRates()
-        usd_rate = currency_rates.get_rate('USD', base_currency)
-    except:
-        date, usd_price, pln_price, eur_price, gbp_price, chf_price = get_from_cache_database(
-            base_currency
-        )
-        usd_rate = 1/usd_price
     curr_symbol = CURRENCY_SYMBOLS[base_currency]
+    fiat_curr_rate = FIAT_CURRENCY_RATES[base_currency]
     df_cleaned = (
         DF_CRYPTO_ASSETS
         .assign(
-            priceUsd=lambda x: x['priceUsd'] * usd_rate,
-            marketCapUsd=lambda x: x['marketCapUsd'] * usd_rate,
+            priceUsd=lambda x: x['priceUsd'] * fiat_curr_rate,
+            marketCapUsd=lambda x: x['marketCapUsd'] * fiat_curr_rate,
             Logo=lambda x: (
                 '[![Coin](https://cryptologos.cc/logos/' +
                 x["id"] + "-" + x["symbol"].str.lower() +
@@ -187,7 +161,7 @@ def display_ranking_table_body(base_currency):
 
 
 ##### Fear and greed index section #####
-df_fng, df_short_fng = get_fear_greed_data()
+df_fng = get_fear_greed_data()
 
 
 @app.callback(
@@ -225,7 +199,7 @@ def display_fng_series(time_range):
     )
     fig.layout.plot_bgcolor = COLORS['background']
     fig.layout.paper_bgcolor = COLORS['background']
-    fig.update_xaxes(showgrid=False, zeroline=False, autorange="reversed")
+    fig.update_xaxes(showgrid=False, zeroline=False)
     fig.update_yaxes(showgrid=False, zeroline=False)
     return fig
 
@@ -279,8 +253,10 @@ def rsi_toggle_collapse(n, is_open):
 
 
 ###### MA-50 and Ma-200 indicator section #######
-df_ma50 = get_ma_data(window='50')
-df_ma200 = get_ma_data(window='180')
+df_ma50, df_ma200 = clean_ma_data(
+    ma_windows=['50', '180'], 
+    ma_types=['sma', 'ema']
+)
 
 
 @app.callback(
