@@ -30,7 +30,7 @@ def resample_df(df):
 
 
 df_short_fng = resample_df(df_fng)
-fng_index_table = (
+fng_gauge_table = (
     html.Section(
         children=[
             html.Div(
@@ -169,7 +169,7 @@ fng_index_table = (
         className='main-fng-box'
     )
 )
-fng_index_line_graph = (
+fng_selector_graph = (
     html.Section(
         children=[
             html.Div([
@@ -195,7 +195,7 @@ fng_index_line_graph = (
         className='graph-container'
     )
 )
-fng_index_info = (
+fng_info_button = (
     html.Div(
         children=[
             dbc.Button(

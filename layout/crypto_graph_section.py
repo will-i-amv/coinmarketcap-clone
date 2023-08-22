@@ -6,13 +6,13 @@ from constants import CURRENCY_SYMBOLS, TODAY
 from callbacks import CRYPTO_ASSET_NAMES
 
 
-main_crypto_title = (
+title = (
     html.H1(
         children="Dash application for cryptocurrencies monitoring",
         className="main-header"
     )
 )
-crypto_and_date_section = (
+crypto_params_selector = (
     html.Section(
         children=[
             html.Div(
