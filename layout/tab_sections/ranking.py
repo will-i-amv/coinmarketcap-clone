@@ -5,7 +5,7 @@ from dash import html, dash_table
 from constants import COLORS, CURRENCY_SYMBOLS
 
 
-warning_message = (
+warning_alert = (
     html.Section(
         children=[
             dbc.Alert(
@@ -18,7 +18,7 @@ warning_message = (
         className='main-options'
     )
 )
-crypto_amount = (
+fiat_rates_led_display = (
     html.Section(
         children=[
             html.Div(
@@ -75,7 +75,7 @@ crypto_amount = (
         className='main-options'
     )
 )
-current_prices_table = (
+crypto_prices_table = (
     html.Section(
         children=[
             html.H2(id="table-header"),

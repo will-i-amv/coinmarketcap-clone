@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 
 
-ma_select_config = (
+ma_params_selector = (
     html.Section(
         children=[
             html.Div(
@@ -61,7 +61,7 @@ ma_graph = (
         className='graph-container'
     )
 )
-ma_indicator_info = (
+ma_info_button = (
     html.Div(
         children=[
             dbc.Button(

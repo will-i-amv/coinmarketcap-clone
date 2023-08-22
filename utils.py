@@ -1,3 +1,4 @@
+import datetime as dt
 import functools as ft
 
 import pandas as pd
@@ -67,3 +68,26 @@ def clean_exchange_rates(date, currency_names):
         models.save_exchange_rates(record)
     rates = df.loc[:, currency_names].to_dict('records')[0]
     return rates
+
+
+def resample_df_fng(df):
+    today = df['timestamp'].max()
+    selected_dates = [
+        today - dt.timedelta(days=day)
+        for day in [0, 1, 6, 29, 364]
+    ]
+    df_sampled = (
+        df
+        .loc[lambda x: x['timestamp'].isin(selected_dates)]
+        .assign(Time=[
+            "Now",
+            "Yesterday",
+            "Week ago",
+            "Month ago",
+            "Year ago"
+        ])
+        .rename(columns={'value': 'Value', 'value_classification': 'Label'})
+        .drop(labels=['timestamp'], axis=1)
+        .reset_index(drop=True)
+    )
+    return df_sampled
