@@ -1,6 +1,7 @@
 import datetime as dt
 import functools as ft
 
+import numpy as np
 import pandas as pd
 
 import api
@@ -37,27 +38,30 @@ def clean_ma_data(ma_windows, ma_types):
             .sort_values(by=['timestamp'])
         )
     df_ma50 = dfs_by_window['50']
-    df_btc_price = api.get_asset_history(
-        start=df_ma50["timestamp"].min(),
-        end=df_ma50["timestamp"].max(),
-        currency='bitcoin',
-        interval='h1'
-    )
-    dfs_by_window_cleaned = {}
-    for ma_window in ma_windows:
-        dfs_by_window_cleaned[ma_window] = (
-            dfs_by_window[ma_window]
-            .merge(df_btc_price, on='timestamp', how='left')
-            .rename(columns={'priceUsd': 'BTC price'})
+    start_datetime = df_ma50["timestamp"].min() 
+    end_datetime = df_ma50["timestamp"].max()
+    if (start_datetime is np.nan) and (end_datetime is np.nan):
+        return tuple(dfs_by_window.values())
+    else:
+        df_btc_price = api.get_asset_history(
+            start=df_ma50["timestamp"].min(),
+            end=df_ma50["timestamp"].max(),
+            currency='bitcoin',
+            interval='h1'
         )
-    return (dfs_by_window_cleaned['50'], dfs_by_window_cleaned['180'])
+        dfs_by_window_cleaned = {}
+        for ma_window in ma_windows:
+            dfs_by_window_cleaned[ma_window] = (
+                dfs_by_window[ma_window]
+                .merge(df_btc_price, on='timestamp', how='left')
+                .rename(columns={'priceUsd': 'BTC price'})
+            )
+        return tuple(dfs_by_window_cleaned.values())
 
 
 def clean_exchange_rates(date, currency_names):
-    try:
-        df = models.get_exchange_rates(date)
-        assert not df.empty
-    except AssertionError:
+    df = models.get_exchange_rates(date)
+    if df.empty:
         df = api.get_exchange_rates()
         record = (
             df
